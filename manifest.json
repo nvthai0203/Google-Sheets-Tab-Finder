@@ -1,0 +1,27 @@
+{
+  "manifest_version": 3,
+  "name": "Search Tabs - Google Sheets",
+  "version": "2.4",
+  "description": "This tool help helps quickly find tabs in Google Sheet.",
+  "host_permissions": ["https://docs.google.com/spreadsheets/*"],
+  "icons": {
+    "16": "icons/spreadsheet16.png",
+    "32": "icons/spreadsheet32.png",
+    "48": "icons/spreadsheet48.png",
+    "128": "icons/spreadsheet128.png"
+  },
+  "action": {
+    "default_icon": {
+      "16": "icons/spreadsheet16.png",
+      "32": "icons/spreadsheet32.png",
+      "48": "icons/spreadsheet48.png",
+      "128": "icons/spreadsheet128.png"
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://docs.google.com/spreadsheets/*"],
+      "js": ["content.js"]
+    }
+  ]
+}
