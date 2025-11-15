@@ -86,21 +86,37 @@ Real-time statistics showing:
 
 ## 🛠️ Technical Details
 
+### Architecture
+The extension is built with a modular architecture for better maintainability:
+- **Separated CSS**: Styles are organized in dedicated stylesheets
+- **Modular JavaScript**: Code is split into logical modules (storage, search, helpers, constants)
+- **Clean Structure**: Clear separation of concerns for easier debugging and testing
+
 ### Permissions Required
 - **Host Permission**: `https://docs.google.com/spreadsheets/*`
   - Required to inject the content script into Google Sheets
 
-### Files Structure
+### Project Structure
 ```
 Google Sheets Tab Finder/
-├── manifest.json       # Extension configuration
-├── content.js          # Main functionality script
-├── icons/              # Extension icons
-│   ├── spreadsheet16.png
-│   ├── spreadsheet32.png
-│   ├── spreadsheet48.png
-│   └── spreadsheet128.png
-└── README.md           # This file
+├── src/
+│   ├── content/
+│   │   ├── storage.js           # LocalStorage management
+│   │   └── (future modular files)
+│   ├── styles/
+│   │   ├── popup.css            # Popup modal styles
+│   │   └── button.css           # Floating button styles
+│   ├── utils/
+│   │   ├── constants.js         # Configuration & constants
+│   │   ├── helpers.js           # Utility helper functions
+│   │   └── search.js            # Search algorithms
+├── icons/                        # Extension icons (16, 32, 48, 128px)
+├── manifest.json                 # Extension configuration (Manifest V3)
+├── content.js                    # Main content script
+├── README.md                     # Documentation
+├── CHANGELOG.md                  # Version history
+├── LICENSE                       # MIT License
+└── .gitignore                    # Git ignore rules
 ```
 
 ### Storage
