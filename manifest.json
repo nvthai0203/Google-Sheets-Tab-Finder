@@ -26,12 +26,18 @@
         "src/utils/helpers.js",
         "src/utils/search.js",
         "src/content/storage.js",
-        "content.js"
+        "src/content/main.js"
       ],
       "css": [
         "src/styles/popup.css",
         "src/styles/button.css"
       ]
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["src/content/popup.html"],
+      "matches": ["https://docs.google.com/*"]
     }
   ]
 }
