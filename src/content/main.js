@@ -77,20 +77,12 @@ function toggleSheetTabsPopup() {
   console.log("📜 Đang mở popup...");
   let popup = document.getElementById("sheetTabPopup");
   let searchInput;
+  let popupReady = false;
 
   if (!popup) {
     popup = document.createElement("div");
     popup.id = "sheetTabPopup";
-
-    // Load HTML from external file
-    fetch(chrome.runtime.getURL("src/content/popup.html"))
-      .then((response) => response.text())
-      .then((html) => {
-        popup.innerHTML = html;
-      })
-      .catch((error) => {
-        console.error("❌ Error loading popup HTML:", error);
-      });
+    popup.dataset.ready = "false";
 
     popup.style.position = "fixed";
     popup.style.top = "50%";
@@ -115,34 +107,173 @@ function toggleSheetTabsPopup() {
 
     document.body.appendChild(popup);
 
-    // Xử lý toggle ẩn/hiện nút EagleX Dev Tool
-    const toggleBtn = popup.querySelector("#toggleEagleXBtn");
-    const devBtn = document.getElementById("openSheetPopup");
+    // Load HTML from external file
+    fetch(chrome.runtime.getURL("src/content/popup.html"))
+      .then((response) => response.text())
+      .then((html) => {
+        popup.innerHTML = html;
+        popup.dataset.ready = "true";
 
-    if (toggleBtn && devBtn) {
-      toggleBtn.checked = devBtn.style.display !== "none";
+        // Xử lý toggle ẩn/hiện nút EagleX Dev Tool
+        const toggleBtn = popup.querySelector("#toggleEagleXBtn");
+        const devBtn = document.getElementById("openSheetPopup");
 
-      toggleBtn.addEventListener("change", function () {
-        devBtn.style.display = this.checked ? "block" : "none";
-        localStorage.setItem("eaglexBtnVisible", this.checked);
+        if (toggleBtn && devBtn) {
+          toggleBtn.checked = devBtn.style.display !== "none";
+
+          toggleBtn.addEventListener("change", function () {
+            devBtn.style.display = this.checked ? "block" : "none";
+            localStorage.setItem("eaglexBtnVisible", this.checked);
+          });
+        }
+
+        // event click nut X
+        const closeBtn = document.getElementById("closePopup");
+        if (closeBtn) {
+          closeBtn.addEventListener("click", () => {
+            popup.style.display = "none";
+          });
+
+          // Js cho nut X
+          closeBtn.addEventListener("mouseenter", () => {
+            closeBtn.style.color = "#e74c3c";
+            closeBtn.style.transform = "scale(1.2)";
+          });
+          closeBtn.addEventListener("mouseleave", () => {
+            closeBtn.style.color = "#555";
+            closeBtn.style.transform = "scale(1)";
+          });
+        }
+
+        // Gắn handler filter input 1 lần
+        searchInput = popup.querySelector("#searchTabs");
+
+        // --- Helpers cho search chính xác hơn ---
+        const normalize = (s) =>
+          s
+            .toLowerCase()
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "") // bỏ dấu tiếng Việt
+            .trim();
+
+        const scoreMatch = (queryRaw, textRaw) => {
+          const q = normalize(queryRaw);
+          const t = normalize(textRaw);
+          if (!q) return 0;
+          if (q === t) return 100; // exact
+          if (t.startsWith(q)) return 90; // prefix
+          // match theo từ đầy đủ
+          const words = t.split(/\s+/);
+          if (words.some((w) => w === q)) return 85;
+          if (t.includes(q)) return 75; // substring
+
+          // subsequence (fuzzy nhẹ)
+          let qi = 0;
+          for (let i = 0; i < t.length && qi < q.length; i++) {
+            if (t[i] === q[qi]) qi++;
+          }
+          if (qi === q.length) {
+            // phạt theo độ dài chênh lệch để bớt "loãng"
+            const penalty = Math.min(20, Math.floor((t.length - q.length) / 2));
+            return 60 - penalty;
+          }
+
+          return 0;
+        };
+
+        let selectedIndex = 0;
+
+        if (searchInput) {
+          searchInput.addEventListener("input", () => {
+            const q = searchInput.value;
+            const allLis = [
+              ...document.querySelectorAll("#sheetTabPopup #tabList li"),
+            ];
+            const items = allLis.filter((li) => li.id !== "tabNotFound");
+
+            // Tính điểm & ẩn/hiện
+            const scored = [];
+            items.forEach((li, index) => {
+              const tabText = li.querySelector("strong").textContent;
+              const s = scoreMatch(q, tabText);
+              li.dataset.searchScore = String(s);
+              const isHit = s > 0 || q === "";
+              li.style.display = isHit ? "block" : "none";
+              li.classList.remove("selected-tab");
+              if (isHit) scored.push({ li, s });
+            });
+
+            // Sắp xếp theo điểm giảm dần (giữ thứ tự cũ nếu điểm bằng nhau)
+            scored.sort((a, b) => b.s - a.s);
+
+            const tabListEl = document.querySelector("#sheetTabPopup #tabList");
+            // Re-append theo thứ tự mới (chỉ những li đang hiển thị)
+            scored.forEach(({ li }) => tabListEl.appendChild(li));
+
+            // Not found
+            let notFound = document.getElementById("tabNotFound");
+            if (scored.length === 0 && q !== "") {
+              if (!notFound) {
+                notFound = document.createElement("li");
+                notFound.id = "tabNotFound";
+                notFound.textContent = "🔍 Not found this Sheet";
+                notFound.style.textAlign = "center";
+                notFound.style.padding = "20px";
+                notFound.style.color = "#888";
+                notFound.style.fontSize = "18px";
+                tabListEl.appendChild(notFound);
+              }
+            } else if (notFound) {
+              notFound.remove();
+            }
+
+            // Reset lựa chọn
+            selectedIndex = 0;
+            if (scored.length > 0) {
+              scored[0].li.classList.add("selected-tab");
+              scored[0].li.scrollIntoView({ block: "nearest" });
+            }
+          });
+
+          // Keyboard navigation
+          searchInput.addEventListener("keydown", (e) => {
+            const visibleItems = [
+              ...document.querySelectorAll("#sheetTabPopup #tabList li"),
+            ].filter((li) => li.style.display !== "none" && li.id !== "tabNotFound");
+
+            // 🛡️ Không có item thì bỏ qua
+            if (!visibleItems.length) return;
+
+            if (e.key === "ArrowDown") {
+              e.preventDefault();
+              visibleItems[selectedIndex]?.classList.remove("selected-tab");
+              selectedIndex = (selectedIndex + 1) % visibleItems.length;
+              visibleItems[selectedIndex]?.classList.add("selected-tab");
+              visibleItems[selectedIndex]?.scrollIntoView({
+                block: "nearest",
+              });
+            } else if (e.key === "ArrowUp") {
+              e.preventDefault();
+              visibleItems[selectedIndex]?.classList.remove("selected-tab");
+              selectedIndex =
+                selectedIndex === 0 ? visibleItems.length - 1 : selectedIndex - 1;
+              visibleItems[selectedIndex]?.classList.add("selected-tab");
+              visibleItems[selectedIndex]?.scrollIntoView({
+                block: "nearest",
+              });
+            } else if (e.key === "Enter") {
+              e.preventDefault();
+              visibleItems[selectedIndex]?.click();
+            }
+          });
+        }
+
+        // Now populate the popup content
+        populatePopupContent(popup);
+      })
+      .catch((error) => {
+        console.error("❌ Error loading popup HTML:", error);
       });
-    }
-
-    // event click nut X
-    document.getElementById("closePopup").addEventListener("click", () => {
-      popup.style.display = "none";
-    });
-
-    // Js cho nut X
-    const closeBtn = document.getElementById("closePopup");
-    closeBtn.addEventListener("mouseenter", () => {
-      closeBtn.style.color = "#e74c3c";
-      closeBtn.style.transform = "scale(1.2)";
-    });
-    closeBtn.addEventListener("mouseleave", () => {
-      closeBtn.style.color = "#555";
-      closeBtn.style.transform = "scale(1)";
-    });
 
     // ESC để đóng popup
     document.addEventListener("keydown", (e) => {
@@ -151,126 +282,13 @@ function toggleSheetTabsPopup() {
       }
     });
 
-    // Gắn handler filter input 1 lần
-    searchInput = popup.querySelector("#searchTabs");
+    return; // Exit after creating popup, wait for HTML to load
+  }
 
-    // --- Helpers cho search chính xác hơn ---
-    const normalize = (s) =>
-      s
-        .toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "") // bỏ dấu tiếng Việt
-        .trim();
-
-    const scoreMatch = (queryRaw, textRaw) => {
-      const q = normalize(queryRaw);
-      const t = normalize(textRaw);
-      if (!q) return 0;
-      if (q === t) return 100; // exact
-      if (t.startsWith(q)) return 90; // prefix
-      // match theo từ đầy đủ
-      const words = t.split(/\s+/);
-      if (words.some((w) => w === q)) return 85;
-      if (t.includes(q)) return 75; // substring
-
-      // subsequence (fuzzy nhẹ)
-      let qi = 0;
-      for (let i = 0; i < t.length && qi < q.length; i++) {
-        if (t[i] === q[qi]) qi++;
-      }
-      if (qi === q.length) {
-        // phạt theo độ dài chênh lệch để bớt "loãng"
-        const penalty = Math.min(20, Math.floor((t.length - q.length) / 2));
-        return 60 - penalty;
-      }
-
-      return 0;
-    };
-
-    let selectedIndex = 0;
-
-    searchInput.addEventListener("input", () => {
-      const q = searchInput.value;
-      const allLis = [
-        ...document.querySelectorAll("#sheetTabPopup #tabList li"),
-      ];
-      const items = allLis.filter((li) => li.id !== "tabNotFound");
-
-      // Tính điểm & ẩn/hiện
-      const scored = [];
-      items.forEach((li, index) => {
-        const tabText = li.querySelector("strong").textContent;
-        const s = scoreMatch(q, tabText);
-        li.dataset.searchScore = String(s);
-        const isHit = s > 0 || q === "";
-        li.style.display = isHit ? "block" : "none";
-        li.classList.remove("selected-tab");
-        if (isHit) scored.push({ li, s });
-      });
-
-      // Sắp xếp theo điểm giảm dần (giữ thứ tự cũ nếu điểm bằng nhau)
-      scored.sort((a, b) => b.s - a.s);
-
-      const tabListEl = document.querySelector("#sheetTabPopup #tabList");
-      // Re-append theo thứ tự mới (chỉ những li đang hiển thị)
-      scored.forEach(({ li }) => tabListEl.appendChild(li));
-
-      // Not found
-      let notFound = document.getElementById("tabNotFound");
-      if (scored.length === 0 && q !== "") {
-        if (!notFound) {
-          notFound = document.createElement("li");
-          notFound.id = "tabNotFound";
-          notFound.textContent = "🔍 Not found this Sheet";
-          notFound.style.textAlign = "center";
-          notFound.style.padding = "20px";
-          notFound.style.color = "#888";
-          notFound.style.fontSize = "18px";
-          tabListEl.appendChild(notFound);
-        }
-      } else if (notFound) {
-        notFound.remove();
-      }
-
-      // Reset lựa chọn
-      selectedIndex = 0;
-      if (scored.length > 0) {
-        scored[0].li.classList.add("selected-tab");
-        scored[0].li.scrollIntoView({ block: "nearest" });
-      }
-    });
-
-    // Keyboard navigation
-    searchInput.addEventListener("keydown", (e) => {
-      const visibleItems = [
-        ...document.querySelectorAll("#sheetTabPopup #tabList li"),
-      ].filter((li) => li.style.display !== "none" && li.id !== "tabNotFound");
-
-      // 🛡️ Không có item thì bỏ qua
-      if (!visibleItems.length) return;
-
-      if (e.key === "ArrowDown") {
-        e.preventDefault();
-        visibleItems[selectedIndex]?.classList.remove("selected-tab");
-        selectedIndex = (selectedIndex + 1) % visibleItems.length;
-        visibleItems[selectedIndex]?.classList.add("selected-tab");
-        visibleItems[selectedIndex]?.scrollIntoView({
-          block: "nearest",
-        });
-      } else if (e.key === "ArrowUp") {
-        e.preventDefault();
-        visibleItems[selectedIndex]?.classList.remove("selected-tab");
-        selectedIndex =
-          selectedIndex === 0 ? visibleItems.length - 1 : selectedIndex - 1;
-        visibleItems[selectedIndex]?.classList.add("selected-tab");
-        visibleItems[selectedIndex]?.scrollIntoView({
-          block: "nearest",
-        });
-      } else if (e.key === "Enter") {
-        e.preventDefault();
-        visibleItems[selectedIndex]?.click();
-      }
-    });
+  // Check if popup is ready
+  if (popup.dataset.ready !== "true") {
+    console.warn("⚠️ Popup HTML chưa load xong, vui lòng đợi...");
+    return;
   }
 
   if (popup.style.display === "block") {
@@ -278,12 +296,26 @@ function toggleSheetTabsPopup() {
     return;
   }
 
+  // Now populate content since HTML is ready
+  populatePopupContent(popup);
+}
+
+// Function to populate popup content
+function populatePopupContent(popup) {
   const tabList = popup.querySelector("ul");
-  searchInput = popup.querySelector("#searchTabs");
+  const searchInput = popup.querySelector("#searchTabs");
+  
+  if (!tabList || !searchInput) {
+    console.error("❌ Popup elements not found");
+    return;
+  }
+  
   tabList.innerHTML = "";
 
   const historyList = popup.querySelector("#historyList");
-  historyList.innerHTML = "";
+  if (historyList) {
+    historyList.innerHTML = "";
+  }
   const historyTabs = JSON.parse(localStorage.getItem("historyTabs")) || [];
 
   historyTabs.forEach((tabName, index) => {
@@ -332,7 +364,9 @@ function toggleSheetTabsPopup() {
       }
     });
 
-    historyList.appendChild(li);
+    if (historyList) {
+      historyList.appendChild(li);
+    }
   });
 
   tabList.style.display = "block";
@@ -698,8 +732,10 @@ function toggleSheetTabsPopup() {
     });
 
     popup.style.display = "block";
-    searchInput.value = "";
-    searchInput.focus(); // Focus input khi mở
+    if (searchInput) {
+      searchInput.value = "";
+      searchInput.focus(); // Focus input khi mở
+    }
   }, 0);
 }
 
