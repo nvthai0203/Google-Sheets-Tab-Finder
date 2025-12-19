@@ -1,4 +1,4 @@
-/* Popup Container Styles */
+/* ❄️ Popup Container with Snowfall Effect ❄️ */
 #sheetTabPopup {
     position: fixed;
     top: 50%;
@@ -60,6 +60,7 @@
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     outline: none;
     margin: 0 12px;
+    position: relative;
 }
 
 #searchTabs::placeholder {
@@ -116,6 +117,7 @@
     overflow-y: auto;
     overflow-x: hidden;
     flex: 2;
+    position: relative;
 }
 
 /* Main Container with Tab List and History */
@@ -123,6 +125,7 @@
     display: flex;
     height: calc(100% - 65px);
     gap: 10px;
+    position: relative;
 }
 
 .tab-item {
@@ -132,6 +135,7 @@
     padding: 10px;
     cursor: pointer;
     border-bottom: 1px solid #ddd;
+    position: relative;
 }
 
 .tab-item:hover {
@@ -166,6 +170,7 @@
     flex: 1;
     overflow-y: auto;
     padding: 16px 0;
+    position: relative;
 }
 
 #historyList {
@@ -173,6 +178,7 @@
     padding: 0;
     font-size: 14px;
     font-weight: 500;
+    position: relative;
 }
 
 .recent-searches-header {
@@ -234,6 +240,7 @@
     border-radius: 12px;
     border: 1px solid #e8ecef;
     box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    position: relative;
 }
 
 /* Bulk Action Buttons Container */
@@ -403,7 +410,7 @@ input:checked + .slider:before {
     background: linear-gradient(135deg, #5a67d8, #6b46c1);
 }
 
-/* Animations */
+/* 🎄 CHRISTMAS ANIMATIONS 🎄 */
 @keyframes slideIn {
     from {
         opacity: 0;
@@ -413,6 +420,524 @@ input:checked + .slider:before {
         opacity: 1;
         transform: translate(-50%, -50%) scale(1);
     }
+}
+
+@keyframes christmasLights {
+    0%, 100% {
+        box-shadow: 0 4px 20px rgba(201, 42, 42, 0.3), 0 0 15px rgba(255, 215, 0, 0.4);
+    }
+    50% {
+        box-shadow: 0 4px 20px rgba(43, 138, 62, 0.3), 0 0 20px rgba(255, 215, 0, 0.6);
+    }
+}
+
+@keyframes shimmer {
+    0% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+/* ❄️ SNOWFALL ANIMATIONS ❄️ */
+@keyframes snowfall1 {
+    0% {
+        top: -5%;
+        left: 5%;
+        opacity: 0;
+    }
+    10% {
+        opacity: 1;
+    }
+    90% {
+        opacity: 0.8;
+    }
+    100% {
+        top: 105%;
+        left: 10%;
+        opacity: 0;
+    }
+}
+
+@keyframes snowfall2 {
+    0% {
+        top: -5%;
+        left: 25%;
+        opacity: 0;
+    }
+    10% {
+        opacity: 0.9;
+    }
+    90% {
+        opacity: 0.6;
+    }
+    100% {
+        top: 105%;
+        left: 20%;
+        opacity: 0;
+    }
+}
+
+@keyframes snowfall3 {
+    0% {
+        top: -5%;
+        left: 45%;
+        opacity: 0;
+    }
+    10% {
+        opacity: 1;
+    }
+    90% {
+        opacity: 0.7;
+    }
+    100% {
+        top: 105%;
+        left: 50%;
+        opacity: 0;
+    }
+}
+
+@keyframes snowfall4 {
+    0% {
+        top: -5%;
+        left: 65%;
+        opacity: 0;
+    }
+    10% {
+        opacity: 0.8;
+    }
+    90% {
+        opacity: 0.5;
+    }
+    100% {
+        top: 105%;
+        left: 60%;
+        opacity: 0;
+    }
+}
+
+@keyframes snowfall5 {
+    0% {
+        top: -5%;
+        left: 85%;
+        opacity: 0;
+    }
+    10% {
+        opacity: 1;
+    }
+    90% {
+        opacity: 0.9;
+    }
+    100% {
+        top: 105%;
+        left: 90%;
+        opacity: 0;
+    }
+}
+
+@keyframes snowfall6 {
+    0% {
+        top: -5%;
+        left: 15%;
+        opacity: 0;
+    }
+    10% {
+        opacity: 0.7;
+    }
+    90% {
+        opacity: 0.4;
+    }
+    100% {
+        top: 105%;
+        left: 12%;
+        opacity: 0;
+    }
+}
+
+@keyframes snowfall7 {
+    0% {
+        top: -5%;
+        left: 35%;
+        opacity: 0;
+    }
+    10% {
+        opacity: 0.9;
+    }
+    90% {
+        opacity: 0.7;
+    }
+    100% {
+        top: 105%;
+        left: 40%;
+        opacity: 0;
+    }
+}
+
+@keyframes snowfall8 {
+    0% {
+        top: -5%;
+        left: 55%;
+        opacity: 0;
+    }
+    10% {
+        opacity: 1;
+    }
+    90% {
+        opacity: 0.8;
+    }
+    100% {
+        top: 105%;
+        left: 58%;
+        opacity: 0;
+    }
+}
+
+@keyframes snowfall9 {
+    0% {
+        top: -5%;
+        left: 75%;
+        opacity: 0;
+    }
+    10% {
+        opacity: 0.6;
+    }
+    90% {
+        opacity: 0.5;
+    }
+    100% {
+        top: 105%;
+        left: 78%;
+        opacity: 0;
+    }
+}
+
+@keyframes snowfall10 {
+    0% {
+        top: -5%;
+        left: 95%;
+        opacity: 0;
+    }
+    10% {
+        opacity: 0.8;
+    }
+    90% {
+        opacity: 0.6;
+    }
+    100% {
+        top: 105%;
+        left: 92%;
+        opacity: 0;
+    }
+}
+
+@keyframes snowfall11 {
+    0% {
+        top: -5%;
+        left: 30%;
+        opacity: 0;
+    }
+    10% {
+        opacity: 0.9;
+    }
+    90% {
+        opacity: 0.7;
+    }
+    100% {
+        top: 105%;
+        left: 33%;
+        opacity: 0;
+    }
+}
+
+@keyframes snowfall12 {
+    0% {
+        top: -5%;
+        left: 70%;
+        opacity: 0;
+    }
+    10% {
+        opacity: 0.8;
+    }
+    90% {
+        opacity: 0.6;
+    }
+    100% {
+        top: 105%;
+        left: 68%;
+        opacity: 0;
+    }
+}
+
+@keyframes snowfall13 {
+    0% {
+        top: -5%;
+        left: 50%;
+        opacity: 0;
+    }
+    10% {
+        opacity: 1;
+    }
+    90% {
+        opacity: 0.8;
+    }
+    100% {
+        top: 105%;
+        left: 52%;
+        opacity: 0;
+    }
+}
+
+@keyframes snowfall14 {
+    0% {
+        top: -5%;
+        left: 80%;
+        opacity: 0;
+    }
+    10% {
+        opacity: 0.7;
+    }
+    90% {
+        opacity: 0.5;
+    }
+    100% {
+        top: 105%;
+        left: 82%;
+        opacity: 0;
+    }
+}
+
+@keyframes snowfall15 {
+    0% {
+        top: -5%;
+        left: 40%;
+        opacity: 0;
+    }
+    10% {
+        opacity: 0.9;
+    }
+    90% {
+        opacity: 0.7;
+    }
+    100% {
+        top: 105%;
+        left: 38%;
+        opacity: 0;
+    }
+}
+
+@keyframes snowfall16 {
+    0% {
+        top: -5%;
+        left: 60%;
+        opacity: 0;
+    }
+    10% {
+        opacity: 0.8;
+    }
+    90% {
+        opacity: 0.6;
+    }
+    100% {
+        top: 105%;
+        left: 63%;
+        opacity: 0;
+    }
+}
+
+/* ❄️ SNOWFLAKES ELEMENTS ❄️ */
+.popup-main-container::before,
+.popup-main-container::after {
+    content: '❄️';
+    position: absolute;
+    font-size: 18px;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.popup-main-container::before {
+    animation: snowfall1 12s linear infinite;
+}
+
+.popup-main-container::after {
+    animation: snowfall2 15s linear infinite 2s;
+}
+
+/* Main Container - 3rd snowflake */
+#sheetTabPopup::before {
+    content: '❄️';
+    position: absolute;
+    font-size: 19px;
+    pointer-events: none;
+    z-index: 1;
+    animation: snowfall11 13s linear infinite 4s;
+}
+
+/* Main Container - 4th snowflake */
+#sheetTabPopup::after {
+    content: '❄️';
+    position: absolute;
+    font-size: 17px;
+    pointer-events: none;
+    z-index: 1;
+    animation: snowfall10 14s linear infinite 1s;
+}
+
+/* Main Container - 5th snowflake */
+#closePopup::before {
+    content: '❄️';
+    position: absolute;
+    font-size: 16px;
+    pointer-events: none;
+    z-index: -1;
+    animation: snowfall13 11s linear infinite 3s;
+}
+
+/* Main Container - 6th snowflake */
+#closePopup::after {
+    content: '❄️';
+    position: absolute;
+    font-size: 18px;
+    pointer-events: none;
+    z-index: -1;
+    animation: snowfall16 12s linear infinite 5s;
+}
+
+/* Main Container - 7th snowflake */
+.popup-main-container > ul::before {
+    content: '❄️';
+    position: absolute;
+    font-size: 17px;
+    pointer-events: none;
+    z-index: 1;
+    animation: snowfall8 13s linear infinite 1s;
+}
+
+/* Main Container - 8th snowflake */
+.popup-main-container > div::before {
+    content: '❄️';
+    position: absolute;
+    font-size: 19px;
+    pointer-events: none;
+    z-index: 1;
+    animation: snowfall7 15s linear infinite 3s;
+}
+
+#tabList::before,
+#tabList::after {
+    content: '❄️';
+    position: absolute;
+    font-size: 22px;
+    pointer-events: none;
+    z-index: 1;
+}
+
+#tabList::before {
+    animation: snowfall3 10s linear infinite 1s;
+}
+
+#tabList::after {
+    animation: snowfall4 14s linear infinite 3s;
+}
+
+/* Tab List - 3rd snowflake */
+.tab-item:first-child::before {
+    content: '❄️';
+    position: absolute;
+    font-size: 20px;
+    pointer-events: none;
+    z-index: 1;
+    animation: snowfall12 11s linear infinite 2s;
+}
+
+/* Tab List - 4th snowflake */
+.tab-item:nth-child(2)::before {
+    content: '❄️';
+    position: absolute;
+    font-size: 19px;
+    pointer-events: none;
+    z-index: 1;
+    animation: snowfall5 13s linear infinite 4s;
+}
+
+/* Tab List - 5th snowflake */
+.tab-item:nth-child(3)::before {
+    content: '❄️';
+    position: absolute;
+    font-size: 21px;
+    pointer-events: none;
+    z-index: 1;
+    animation: snowfall6 9s linear infinite;
+}
+
+/* Tab List - 6th snowflake */
+.tab-item:nth-child(4)::before {
+    content: '❄️';
+    position: absolute;
+    font-size: 18px;
+    pointer-events: none;
+    z-index: 1;
+    animation: snowfall13 10s linear infinite 2s;
+}
+
+/* Tab List - 7th snowflake */
+.tab-item:nth-child(5)::before {
+    content: '❄️';
+    position: absolute;
+    font-size: 20px;
+    pointer-events: none;
+    z-index: 1;
+    animation: snowfall10 14s linear infinite 4s;
+}
+
+#popupHeader::before,
+#popupHeader::after {
+    content: '❄️';
+    position: absolute;
+    font-size: 20px;
+    pointer-events: none;
+    z-index: 0;
+}
+
+#popupHeader::before {
+    animation: snowfall7 9s linear infinite 2s;
+}
+
+#popupHeader::after {
+    animation: snowfall8 16s linear infinite 5s;
+}
+
+/* Header - 3rd snowflake */
+#searchTabs::before {
+    content: '❄️';
+    position: absolute;
+    font-size: 18px;
+    pointer-events: none;
+    z-index: 1;
+    animation: snowfall14 10s linear infinite 1s;
+}
+
+/* Header - 4th snowflake */
+#searchTabs::after {
+    content: '❄️';
+    position: absolute;
+    font-size: 17px;
+    pointer-events: none;
+    z-index: 1;
+    animation: snowfall15 12s linear infinite 3s;
+}
+
+/* Header - 5th snowflake */
+#closePopup::after {
+    content: '❄️';
+    position: absolute;
+    font-size: 16px;
+    pointer-events: none;
+    z-index: -1;
+    animation: snowfall9 11s linear infinite 5s;
 }
 
 /* Responsive Design - Media Queries */
