@@ -444,7 +444,7 @@ input:checked + .slider:before {
 }
 
 /* ❄️ SNOWFALL ANIMATIONS ❄️ */
-@keyframes snowfall1 {
+/* @keyframes snowfall1 {
     0% {
         top: -5%;
         left: 5%;
@@ -461,7 +461,7 @@ input:checked + .slider:before {
         left: 10%;
         opacity: 0;
     }
-}
+} */
 
 @keyframes snowfall2 {
     0% {
@@ -749,14 +749,14 @@ input:checked + .slider:before {
 }
 
 /* ❄️ SNOWFLAKES ELEMENTS ❄️ */
-.popup-main-container::before,
+/* .popup-main-container::before,
 .popup-main-container::after {
     content: '❄️';
     position: absolute;
     font-size: 18px;
     pointer-events: none;
     z-index: 1;
-}
+} */
 
 .popup-main-container::before {
     animation: snowfall1 12s linear infinite;
@@ -767,73 +767,73 @@ input:checked + .slider:before {
 }
 
 /* Main Container - 3rd snowflake */
-#sheetTabPopup::before {
+/* #sheetTabPopup::before {
     content: '❄️';
     position: absolute;
     font-size: 19px;
     pointer-events: none;
     z-index: 1;
     animation: snowfall11 13s linear infinite 4s;
-}
+} */
 
 /* Main Container - 4th snowflake */
-#sheetTabPopup::after {
+/* #sheetTabPopup::after {
     content: '❄️';
     position: absolute;
     font-size: 17px;
     pointer-events: none;
     z-index: 1;
     animation: snowfall10 14s linear infinite 1s;
-}
+} */
 
 /* Main Container - 5th snowflake */
-#closePopup::before {
+/* #closePopup::before {
     content: '❄️';
     position: absolute;
     font-size: 16px;
     pointer-events: none;
     z-index: -1;
     animation: snowfall13 11s linear infinite 3s;
-}
+} */
 
 /* Main Container - 6th snowflake */
-#closePopup::after {
+/* #closePopup::after {
     content: '❄️';
     position: absolute;
     font-size: 18px;
     pointer-events: none;
     z-index: -1;
     animation: snowfall16 12s linear infinite 5s;
-}
+} */
 
 /* Main Container - 7th snowflake */
-.popup-main-container > ul::before {
+/* .popup-main-container > ul::before {
     content: '❄️';
     position: absolute;
     font-size: 17px;
     pointer-events: none;
     z-index: 1;
     animation: snowfall8 13s linear infinite 1s;
-}
+} */
 
 /* Main Container - 8th snowflake */
-.popup-main-container > div::before {
+/* .popup-main-container > div::before {
     content: '❄️';
     position: absolute;
     font-size: 19px;
     pointer-events: none;
     z-index: 1;
     animation: snowfall7 15s linear infinite 3s;
-}
+} */
 
-#tabList::before,
+/* #tabList::before,
 #tabList::after {
     content: '❄️';
     position: absolute;
     font-size: 22px;
     pointer-events: none;
     z-index: 1;
-}
+} */
 
 #tabList::before {
     animation: snowfall3 10s linear infinite 1s;
@@ -844,63 +844,63 @@ input:checked + .slider:before {
 }
 
 /* Tab List - 3rd snowflake */
-.tab-item:first-child::before {
+/* .tab-item:first-child::before {
     content: '❄️';
     position: absolute;
     font-size: 20px;
     pointer-events: none;
     z-index: 1;
     animation: snowfall12 11s linear infinite 2s;
-}
+} */
 
 /* Tab List - 4th snowflake */
-.tab-item:nth-child(2)::before {
+/* .tab-item:nth-child(2)::before {
     content: '❄️';
     position: absolute;
     font-size: 19px;
     pointer-events: none;
     z-index: 1;
     animation: snowfall5 13s linear infinite 4s;
-}
+} */
 
 /* Tab List - 5th snowflake */
-.tab-item:nth-child(3)::before {
+/* .tab-item:nth-child(3)::before {
     content: '❄️';
     position: absolute;
     font-size: 21px;
     pointer-events: none;
     z-index: 1;
     animation: snowfall6 9s linear infinite;
-}
+} */
 
 /* Tab List - 6th snowflake */
-.tab-item:nth-child(4)::before {
+/* .tab-item:nth-child(4)::before {
     content: '❄️';
     position: absolute;
     font-size: 18px;
     pointer-events: none;
     z-index: 1;
     animation: snowfall13 10s linear infinite 2s;
-}
+} */
 
 /* Tab List - 7th snowflake */
-.tab-item:nth-child(5)::before {
+/* .tab-item:nth-child(5)::before {
     content: '❄️';
     position: absolute;
     font-size: 20px;
     pointer-events: none;
     z-index: 1;
     animation: snowfall10 14s linear infinite 4s;
-}
+} */
 
-#popupHeader::before,
+/* #popupHeader::before,
 #popupHeader::after {
     content: '❄️';
     position: absolute;
     font-size: 20px;
     pointer-events: none;
     z-index: 0;
-}
+} */
 
 #popupHeader::before {
     animation: snowfall7 9s linear infinite 2s;
@@ -911,34 +911,34 @@ input:checked + .slider:before {
 }
 
 /* Header - 3rd snowflake */
-#searchTabs::before {
+/* #searchTabs::before {
     content: '❄️';
     position: absolute;
     font-size: 18px;
     pointer-events: none;
     z-index: 1;
     animation: snowfall14 10s linear infinite 1s;
-}
+} */
 
 /* Header - 4th snowflake */
-#searchTabs::after {
+/* #searchTabs::after {
     content: '❄️';
     position: absolute;
     font-size: 17px;
     pointer-events: none;
     z-index: 1;
     animation: snowfall15 12s linear infinite 3s;
-}
+} */
 
 /* Header - 5th snowflake */
-#closePopup::after {
+/* #closePopup::after {
     content: '❄️';
     position: absolute;
     font-size: 16px;
     pointer-events: none;
     z-index: -1;
     animation: snowfall9 11s linear infinite 5s;
-}
+} */
 
 /* Responsive Design - Media Queries */
 
