@@ -44,6 +44,59 @@ function addToHistory(tabName) {
   localStorage.setItem("historyTabs", JSON.stringify(historyTabs));
 }
 
+function getThemeMode() {
+  return localStorage.getItem("popupThemeMode") || "auto";
+}
+
+function getPopupFontScale() {
+  const raw = localStorage.getItem("popupFontScale") || "1";
+  const allowed = new Set(["0.9", "1", "1.1", "1.2", "1.3"]);
+  return allowed.has(raw) ? raw : "1";
+}
+
+function getFavoriteTabs() {
+  return JSON.parse(localStorage.getItem("favoriteTabs") || "[]");
+}
+
+function setFavoriteTabs(tabs) {
+  localStorage.setItem("favoriteTabs", JSON.stringify(tabs));
+}
+
+function toggleFavoriteTab(tabName) {
+  const favorites = new Set(getFavoriteTabs());
+  if (favorites.has(tabName)) {
+    favorites.delete(tabName);
+  } else {
+    favorites.add(tabName);
+  }
+  setFavoriteTabs([...favorites]);
+  return favorites.has(tabName);
+}
+
+function applyPopupTheme(popup, mode = getThemeMode()) {
+  if (!popup) return;
+  if (mode === "auto") {
+    popup.removeAttribute("data-theme");
+  } else {
+    popup.setAttribute("data-theme", mode);
+  }
+
+  const themeModeSelect = popup.querySelector("#themeMode");
+  if (themeModeSelect) {
+    themeModeSelect.value = mode;
+  }
+}
+
+function applyPopupFontScale(popup, scale = getPopupFontScale()) {
+  if (!popup) return;
+  popup.style.setProperty("--ui-font-scale", scale);
+
+  const fontSizeSelect = popup.querySelector("#fontSizeMode");
+  if (fontSizeSelect) {
+    fontSizeSelect.value = scale;
+  }
+}
+
 //Khi click vào button tất cả trang tính
 function attachPopupTriggerToAllSheetsButton() {
   const observer = new MutationObserver(() => {
@@ -84,27 +137,6 @@ function toggleSheetTabsPopup() {
     popup.id = "sheetTabPopup";
     popup.dataset.ready = "false";
 
-    popup.style.position = "fixed";
-    popup.style.top = "50%";
-    popup.style.left = "50%";
-    popup.style.transform = "translate(-50%, -50%)";
-    popup.style.background = "linear-gradient(145deg, #ffffff, #ffffff)";
-    popup.style.border = "1px solid #e2e8f0";
-    popup.style.borderRadius = "20px";
-    popup.style.padding = "0 20px 20px 20px";
-    popup.style.boxShadow =
-      "0 25px 50px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(255,255,255,0.05)";
-    popup.style.zIndex = "100000";
-    popup.style.width = "min(100vw, 1050px)";
-    popup.style.height = "min(95vh, 900px)";
-    popup.style.maxHeight = "95vh";
-    popup.style.overflowY = "hidden";
-    popup.style.overflowX = "hidden";
-    popup.style.display = "none";
-    popup.style.boxSizing = "border-box";
-    popup.style.backdropFilter = "blur(20px)";
-    popup.style.animation = "slideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1)";
-
     document.body.appendChild(popup);
 
     // Load HTML from external file
@@ -113,6 +145,29 @@ function toggleSheetTabsPopup() {
       .then((html) => {
         popup.innerHTML = html;
         popup.dataset.ready = "true";
+        popup.dataset.quickFilter = popup.dataset.quickFilter || "all";
+        applyPopupTheme(popup);
+        applyPopupFontScale(popup);
+
+        const themeModeSelect = popup.querySelector("#themeMode");
+        if (themeModeSelect) {
+          themeModeSelect.value = getThemeMode();
+          themeModeSelect.addEventListener("change", () => {
+            const mode = themeModeSelect.value;
+            localStorage.setItem("popupThemeMode", mode);
+            applyPopupTheme(popup, mode);
+          });
+        }
+
+        const fontSizeSelect = popup.querySelector("#fontSizeMode");
+        if (fontSizeSelect) {
+          fontSizeSelect.value = getPopupFontScale();
+          fontSizeSelect.addEventListener("change", () => {
+            const scale = fontSizeSelect.value;
+            localStorage.setItem("popupFontScale", scale);
+            applyPopupFontScale(popup, scale);
+          });
+        }
 
         // Xử lý toggle ẩn/hiện nút EagleX Dev Tool
         const toggleBtn = popup.querySelector("#toggleEagleXBtn");
@@ -132,16 +187,6 @@ function toggleSheetTabsPopup() {
         if (closeBtn) {
           closeBtn.addEventListener("click", () => {
             popup.style.display = "none";
-          });
-
-          // Js cho nut X
-          closeBtn.addEventListener("mouseenter", () => {
-            closeBtn.style.color = "#e74c3c";
-            closeBtn.style.transform = "scale(1.2)";
-          });
-          closeBtn.addEventListener("mouseleave", () => {
-            closeBtn.style.color = "#555";
-            closeBtn.style.transform = "scale(1)";
           });
         }
 
@@ -186,6 +231,7 @@ function toggleSheetTabsPopup() {
         if (searchInput) {
           searchInput.addEventListener("input", () => {
             const q = searchInput.value;
+            const currentQuickFilter = popup.dataset.quickFilter || "all";
             const allLis = [
               ...document.querySelectorAll("#sheetTabPopup #tabList li"),
             ];
@@ -197,7 +243,14 @@ function toggleSheetTabsPopup() {
               const tabText = li.querySelector("strong").textContent;
               const s = scoreMatch(q, tabText);
               li.dataset.searchScore = String(s);
-              const isHit = s > 0 || q === "";
+              const isHidden = li.dataset.isHidden === "true";
+              const isFavorite = li.dataset.isFavorite === "true";
+              const passQuickFilter =
+                currentQuickFilter === "all" ||
+                (currentQuickFilter === "visible" && !isHidden) ||
+                (currentQuickFilter === "hidden" && isHidden) ||
+                (currentQuickFilter === "favorite" && isFavorite);
+              const isHit = (s > 0 || q === "") && passQuickFilter;
               li.style.display = isHit ? "block" : "none";
               li.classList.remove("selected-tab");
               if (isHit) scored.push({ li, s });
@@ -268,6 +321,18 @@ function toggleSheetTabsPopup() {
           });
         }
 
+        const quickFilterButtons = popup.querySelectorAll(".quick-filter-btn");
+        quickFilterButtons.forEach((button) => {
+          button.addEventListener("click", () => {
+            const filter = button.dataset.filter || "all";
+            popup.dataset.quickFilter = filter;
+            quickFilterButtons.forEach((btn) =>
+              btn.classList.toggle("active", btn === button)
+            );
+            searchInput?.dispatchEvent(new Event("input"));
+          });
+        });
+
         // Now populate the popup content
         populatePopupContent(popup);
       })
@@ -296,6 +361,9 @@ function toggleSheetTabsPopup() {
     return;
   }
 
+  applyPopupTheme(popup);
+  applyPopupFontScale(popup);
+
   // Now populate content since HTML is ready
   populatePopupContent(popup);
 }
@@ -320,30 +388,14 @@ function populatePopupContent(popup) {
 
   historyTabs.forEach((tabName, index) => {
     const li = document.createElement("li");
+    li.classList.add("history-item");
     li.innerHTML = `
-            <div style="display: flex; align-items: center; gap: 10px;">
-                <span style="
-                    background: linear-gradient(135deg, #667eea, #764ba2);
-                    color: white;
-                    border-radius: 50%;
-                    width: 24px;
-                    height: 24px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    font-size: 11px;
-                    font-weight: bold;
-                ">${index + 1}</span>
-                <span style="flex: 1; font-weight: 500;">${tabName}</span>
+            <div class="history-item-content">
+                <span class="history-rank">${index + 1}</span>
+                <span class="history-tab-name">${tabName}</span>
             </div>
         `;
-    li.style.padding = "12px";
-    li.style.cursor = "pointer";
-    li.style.borderBottom = "1px solid #f1f5f9";
-    li.style.borderRadius = "8px";
-    li.style.marginBottom = "4px";
     li.title = `Click to switch to "${tabName}"`;
-    li.classList.add("history-item");
 
     li.addEventListener("click", () => {
       const tab = [...document.querySelectorAll(".docs-sheet-tab-name")].find(
@@ -456,8 +508,61 @@ function populatePopupContent(popup) {
   setTimeout(() => {
     const hideAllBtn = popup.querySelector("#hideAllTabs");
     const showAllBtn = popup.querySelector("#showAllTabs");
+    const undoBar = popup.querySelector("#undoBar");
+    const undoMessage = popup.querySelector("#undoMessage");
+    const undoActionBtn = popup.querySelector("#undoActionBtn");
+
+    let lastUndoHiddenTabs = null;
+    let undoTimer = null;
+
+    const restoreHiddenTabs = (hiddenTabsSnapshot) => {
+      const hiddenSet = new Set(hiddenTabsSnapshot || []);
+      localStorage.setItem("hiddenTabs", JSON.stringify([...hiddenSet]));
+
+      document.querySelectorAll(".docs-sheet-tab").forEach((tab) => {
+        const name = tab.querySelector(".docs-sheet-tab-name")?.textContent?.trim();
+        if (!name) return;
+        tab.style.display = hiddenSet.has(name) ? "none" : "";
+      });
+
+      document.querySelectorAll("#tabList li").forEach((li) => {
+        const tabName = li.querySelector("strong")?.textContent?.trim();
+        if (!tabName) return;
+        const isHidden = hiddenSet.has(tabName);
+        li.dataset.isHidden = isHidden ? "true" : "false";
+        const cb = li.querySelector(".tabCheckbox");
+        if (cb) cb.checked = isHidden;
+        const st = li.querySelector("strong");
+        if (st) st.style.color = isHidden ? "var(--ui-text-muted)" : "var(--ui-text)";
+      });
+
+      searchInput?.dispatchEvent(new Event("input"));
+      updateStats();
+    };
+
+    const showUndo = (message, hiddenTabsSnapshot) => {
+      if (!undoBar || !undoMessage || !undoActionBtn) return;
+      lastUndoHiddenTabs = [...hiddenTabsSnapshot];
+      undoMessage.textContent = message;
+      undoBar.classList.add("show");
+      clearTimeout(undoTimer);
+      undoTimer = setTimeout(() => {
+        undoBar.classList.remove("show");
+        lastUndoHiddenTabs = null;
+      }, 5000);
+    };
+
+    undoActionBtn?.addEventListener("click", () => {
+      if (!lastUndoHiddenTabs) return;
+      restoreHiddenTabs(lastUndoHiddenTabs);
+      undoBar?.classList.remove("show");
+      lastUndoHiddenTabs = null;
+      clearTimeout(undoTimer);
+    });
 
     hideAllBtn?.addEventListener("click", () => {
+      const previousHiddenTabs =
+        JSON.parse(localStorage.getItem("hiddenTabs") || "[]") || [];
       // Tên tab đang active (luôn giữ lại)
       const activeName = document
         .querySelector(".docs-sheet-active-tab .docs-sheet-tab-name")
@@ -497,8 +602,9 @@ function populatePopupContent(popup) {
         if (li) {
           const cb = li.querySelector(".tabCheckbox");
           if (cb) cb.checked = true;
+          li.dataset.isHidden = "true";
           const st = li.querySelector("strong");
-          if (st) st.style.color = "#A0A0A0";
+          if (st) st.style.color = "var(--ui-text-muted)";
         }
       });
 
@@ -518,15 +624,20 @@ function populatePopupContent(popup) {
         if (activeLi) {
           const cb = activeLi.querySelector(".tabCheckbox");
           if (cb) cb.checked = false;
+          activeLi.dataset.isHidden = "false";
           const st = activeLi.querySelector("strong");
-          if (st) st.style.color = "#000";
+          if (st) st.style.color = "var(--ui-text)";
         }
       }
 
+      showUndo("Hidden visible tabs.", previousHiddenTabs);
+      searchInput?.dispatchEvent(new Event("input"));
       updateStats();
     });
 
     showAllBtn?.addEventListener("click", () => {
+      const previousHiddenTabs =
+        JSON.parse(localStorage.getItem("hiddenTabs") || "[]") || [];
       // Xóa danh sách ẩn trong localStorage
       localStorage.removeItem("hiddenTabs");
 
@@ -539,10 +650,13 @@ function populatePopupContent(popup) {
       document.querySelectorAll("#tabList li").forEach((li) => {
         const cb = li.querySelector(".tabCheckbox");
         if (cb) cb.checked = false;
+        li.dataset.isHidden = "false";
         const st = li.querySelector("strong");
-        if (st) st.style.color = "#000";
+        if (st) st.style.color = "var(--ui-text)";
       });
 
+      showUndo("Shown all hidden tabs.", previousHiddenTabs);
+      searchInput?.dispatchEvent(new Event("input"));
       updateStats();
     });
 
@@ -599,6 +713,7 @@ function populatePopupContent(popup) {
     updateStats();
 
     const hiddenTabs = JSON.parse(localStorage.getItem("hiddenTabs")) || [];
+    const favoriteTabs = new Set(getFavoriteTabs());
     applyHiddenTabsFromStorage();
 
     const tabs = document.querySelectorAll(".docs-sheet-tab");
@@ -617,7 +732,7 @@ function populatePopupContent(popup) {
       const isActive = tab.classList.contains("docs-sheet-active-tab");
 
       let color = "black";
-      let textColor = isHidden ? "#A0A0A0" : "#000";
+      let textColor = isHidden ? "var(--ui-text-muted)" : "var(--ui-text)";
 
       if (colorIndicator) {
         color = window.getComputedStyle(colorIndicator).backgroundColor;
@@ -625,6 +740,7 @@ function populatePopupContent(popup) {
 
       const tabText = tabName.textContent.trim();
       const isChecked = hiddenTabs.includes(tabText);
+      const isFavorite = favoriteTabs.has(tabText);
 
       // Check for duplicates
       const allTabNames = [
@@ -641,22 +757,28 @@ function populatePopupContent(popup) {
       }
 
       li.innerHTML = `
-                <input type="checkbox" class="tabCheckbox" style="margin-right: 10px; width:20px; height:20px; cursor: pointer;" ${
+                <input type="checkbox" class="tabCheckbox" ${
                   isChecked ? "checked" : ""
                 }>
-                <span style='color: ${color}; font-size: 20px;'>●</span>
-                <strong style='font-size: 18px; color: ${textColor};'>${tabText}</strong>
+                <button class="favorite-btn ${
+                  isFavorite ? "is-favorite" : ""
+                }" title="Toggle favorite" aria-label="Toggle favorite">★</button>
+                <span class="tab-color-dot" style='color: ${color};'>●</span>
+                <strong class="tab-name" style='color: ${textColor};'>${tabText}</strong>
             `;
-
-      li.style.padding = "10px";
-      li.style.cursor = "pointer";
-      li.style.borderBottom = "1px solid #ddd";
       li.classList.add("tab-item");
+      li.dataset.isHidden = isChecked ? "true" : "false";
+      li.dataset.isFavorite = isFavorite ? "true" : "false";
+      li.dataset.tabName = tabText;
 
       // Xử lý chuyển tab khi click ngoài checkbox
       li.addEventListener("click", (e) => {
         // Ngăn nếu click vào checkbox
-        if (e.target.classList.contains("tabCheckbox")) return;
+        if (
+          e.target.classList.contains("tabCheckbox") ||
+          e.target.classList.contains("favorite-btn")
+        )
+          return;
 
         console.log(`✅ Chuyển sang tab: ${tabText}`);
         tab.dispatchEvent(
@@ -686,6 +808,16 @@ function populatePopupContent(popup) {
 
       // Gắn sự kiện riêng cho checkbox
       const checkbox = li.querySelector(".tabCheckbox");
+      const favoriteBtn = li.querySelector(".favorite-btn");
+
+      favoriteBtn?.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const favorite = toggleFavoriteTab(tabText);
+        li.dataset.isFavorite = favorite ? "true" : "false";
+        favoriteBtn.classList.toggle("is-favorite", favorite);
+        searchInput?.dispatchEvent(new Event("input"));
+      });
+
       checkbox.addEventListener("change", (e) => {
         e.stopPropagation(); // Ngăn lan event click checkbox
         let currentHiddenTabs =
@@ -713,19 +845,22 @@ function populatePopupContent(popup) {
           const elTab = matchingTab.closest(".docs-sheet-tab");
           if (elTab) elTab.style.display = isChecked ? "none" : "";
         }
+        li.dataset.isHidden = isChecked ? "true" : "false";
 
         // trong checkbox.addEventListener("change", ...)
         const labelStrong = li.querySelector("strong");
         if (labelStrong) {
-          labelStrong.style.color = isChecked ? "#A0A0A0" : "#000";
+          labelStrong.style.color = isChecked
+            ? "var(--ui-text-muted)"
+            : "var(--ui-text)";
         }
+        searchInput?.dispatchEvent(new Event("input"));
         updateStats();
       });
 
       if (isActive) {
-        li.style.backgroundColor = "#e6f7ff";
+        li.classList.add("active-tab-item");
         li.style.fontWeight = "bold";
-        li.style.borderLeft = "5px solid #1890ff";
       }
 
       tabList.appendChild(li);
@@ -755,35 +890,6 @@ function addPopupButton() {
     const button = document.createElement("button");
     button.id = "openSheetPopup";
     button.textContent = "All Tabs (Ctrl + S)";
-    button.style.position = "fixed";
-    button.style.bottom = "50px";
-    button.style.right = "10px";
-    button.style.padding = "14px 20px";
-    button.style.border = "none";
-    button.style.background =
-      "linear-gradient(135deg, #4CAF50 0%, #45a049 100%)";
-    button.style.color = "white";
-    button.style.borderRadius = "50px";
-    button.style.cursor = "pointer";
-    button.style.zIndex = "99999";
-    button.style.boxShadow =
-      "0 8px 25px rgba(102, 126, 234, 0.4), 0 0 0 1px rgba(255,255,255,0.05)";
-    button.style.transition = "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)";
-    button.style.fontSize = "14px";
-    button.style.fontWeight = "600";
-    button.style.backdropFilter = "blur(10px)";
-
-    button.addEventListener("mouseenter", () => {
-      button.style.transform = "translateY(-2px) scale(1.05)";
-      button.style.boxShadow =
-        "0 12px 35px rgba(102, 126, 234, 0.5), 0 0 0 1px rgba(255,255,255,0.1)";
-    });
-
-    button.addEventListener("mouseleave", () => {
-      button.style.transform = "translateY(0) scale(1)";
-      button.style.boxShadow =
-        "0 8px 25px rgba(102, 126, 234, 0.4), 0 0 0 1px rgba(255,255,255,0.05)";
-    });
     button.style.display =
       localStorage.getItem("eaglexBtnVisible") === "false" ? "none" : "block";
     button.addEventListener("click", toggleSheetTabsPopup);

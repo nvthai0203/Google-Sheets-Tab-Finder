@@ -5,6 +5,48 @@ All notable changes to the Google Sheets Tab Finder extension will be documented
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.9.0] - 2026-05-08
+
+### Added
+- **Favorites**: Mark/unmark tabs with a star button and persist with `localStorage` (`favoriteTabs`)
+- **Quick Filters**: Added fast filtering chips in popup:
+  - `All`
+  - `Visible`
+  - `Hidden`
+  - `Favorite`
+- **Undo for Bulk Actions**: Added temporary undo bar for:
+  - `Hide Visible`
+  - `Show Hidden`
+- **Theme Mode Selector**:
+  - `Auto`
+  - `Light`
+  - `Dark`
+  - Persisted via `popupThemeMode`
+- **Font Size Selector**:
+  - `Small (90%)`
+  - `Default (100%)`
+  - `Medium (110%)`
+  - `Large (120%)`
+  - `XL (130%)`
+  - Persisted via `popupFontScale`
+
+### Changed
+- **UI Refresh v1/v1.1**:
+  - Refactored popup UI to cleaner/compact visual style
+  - Reduced inline styling and moved more presentation logic to CSS classes
+  - Improved spacing and readability for long tab lists
+- **Dark Mode Improvements**:
+  - Introduced theme tokens for easier customization
+  - Improved contrast and clarity in dark mode
+  - Improved active tab highlighting in dark mode
+- **Keyboard/Selection UX**:
+  - Better selected-row visibility while navigating results with keyboard
+
+### Technical
+- Updated `README.md` to match current functionality and structure
+- Expanded `localStorage` usage to support user personalization and productivity features
+- Preserved existing tab management/search flows while layering new controls and filters
+
 ## [2.4.0] - 2025-11-15
 
 ### Changed

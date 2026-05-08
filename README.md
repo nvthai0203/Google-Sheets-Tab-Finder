@@ -1,181 +1,118 @@
 # Search Tabs - Google Sheets
 
-A powerful Chrome extension that helps you quickly find, manage, and navigate tabs in Google Sheets with advanced search and filtering capabilities.
+A Chrome extension that helps you find, organize, and jump between Google Sheets tabs quickly, with search, filters, favorites, and customizable UI.
 
-## 🌟 Features
+## Features
 
-### 🔍 Smart Tab Search
-- **Fast Search**: Quickly find tabs using intelligent fuzzy search with Vietnamese diacritics support
-- **Keyboard Navigation**: Navigate search results using arrow keys (↑/↓) and Enter
-- **Score-based Matching**: Results ranked by relevance (exact match, prefix match, substring match)
+### Smart Search and Navigation
+- Fuzzy search with Vietnamese diacritics normalization.
+- Relevance scoring (exact, prefix, word, substring, subsequence).
+- Keyboard navigation (`ArrowUp`, `ArrowDown`, `Enter`).
+- Quick switch to tab by click or keyboard.
 
-### 📊 Tab Management
-- **Hide/Show Tabs**: Toggle tab visibility with checkboxes
-- **Bulk Actions**: Hide all visible tabs or show all hidden tabs with one click
-- **Persistent State**: Hidden tabs remain hidden across sessions
+### Tab Management
+- Hide/show individual tabs with checkbox.
+- Bulk actions: `Hide Visible`, `Show Hidden`.
+- Undo bar for bulk actions (restore previous hidden state).
+- Real-time stats: total, hidden, visible.
 
-### 🎨 Advanced Sorting
-Sort tabs by:
-- Default order (original sheet order)
-- Alphabetical (A-Z)
-- Color grouping
-- Recently used
+### Favorites and Filters
+- Mark/unmark favorites with star button.
+- Quick filters: `All`, `Visible`, `Hidden`, `Favorite`.
+- Quick filter combines with search query.
 
-### 📝 Recent History
-- Track last 10 accessed tabs
-- Quick access to recently viewed sheets
-- Auto-updated on every tab switch
+### Sorting and History
+- Sort by:
+  - Default order (sheet order)
+  - Alphabetical
+  - Color
+  - Recently used
+- Recent history list (up to 10 items).
 
-### ⌨️ Keyboard Shortcuts
-- **Ctrl + S** (or **Cmd + S** on Mac): Open tab finder popup
-- **Arrow Keys**: Navigate through search results
-- **Enter**: Switch to selected tab
-- **ESC**: Close popup
+### UI Customization
+- Theme modes: `Auto`, `Light`, `Dark`.
+- Font size presets:
+  - Small (90%)
+  - Default (100%)
+  - Medium (110%)
+  - Large (120%)
+  - XL (130%)
+- Show/hide floating `All Tabs` button.
 
-### 📈 Statistics Dashboard
-Real-time statistics showing:
-- Total tabs count
-- Hidden tabs count
-- Visible tabs count
+### Shortcuts
+- `Ctrl + S` / `Cmd + S`: open popup.
+- `Esc`: close popup.
 
-### 🎯 Additional Features
-- **Duplicate Detection**: Warns when multiple tabs have the same name
-- **Color Indicators**: Visual color coding for tabs
-- **Toggle Button**: Show/hide the floating "All Tabs" button
-- **Active Tab Highlighting**: Current tab clearly marked in the list
+## Installation
 
-## 🚀 Installation
+### Manual (Developer Mode)
+1. Clone or download this repository.
+2. Open `chrome://extensions/`.
+3. Enable **Developer mode**.
+4. Click **Load unpacked**.
+5. Select the project folder.
 
-### From Chrome Web Store
-1. Visit the Chrome Web Store (link to be added)
-2. Click "Add to Chrome"
-3. Confirm the installation
+## Usage
 
-### Manual Installation (Developer Mode)
-1. Download or clone this repository
-2. Open Chrome and navigate to `chrome://extensions/`
-3. Enable "Developer mode" in the top right
-4. Click "Load unpacked"
-5. Select the extension folder
+### Open Popup
+- Press `Ctrl + S` / `Cmd + S`.
+- Click the floating `All Tabs (Ctrl + S)` button.
+- Click the Google Sheets `All Sheets` button (extension overrides it).
 
-## 📖 Usage
+### Daily Workflow
+1. Open popup.
+2. Search tab name.
+3. (Optional) apply quick filter (`All`, `Visible`, `Hidden`, `Favorite`).
+4. Navigate with keyboard or click to switch.
+5. Use favorites and hide/show to keep list focused.
 
-### Opening the Tab Finder
-- **Method 1**: Press **Ctrl + S** (Cmd + S on Mac)
-- **Method 2**: Click the "All Tabs (Ctrl + S)" button in the bottom-right corner
-- **Method 3**: Click the "All Sheets" button in Google Sheets (overridden by extension)
+## Project Structure
 
-### Searching for Tabs
-1. Open the tab finder popup
-2. Type in the search box
-3. Results are automatically filtered and sorted by relevance
-4. Use arrow keys to navigate or click on a tab to switch to it
-
-### Hiding/Showing Tabs
-- **Individual**: Check/uncheck the checkbox next to any tab name
-- **Bulk Hide**: Click "🙈 Hide All Visible" to hide all currently visible tabs (except active tab)
-- **Bulk Show**: Click "👁️ Show All Hidden" to reveal all hidden tabs
-
-### Sorting Tabs
-1. Use the dropdown menu at the bottom of the popup
-2. Select sorting method:
-   - 📋 Default Order
-   - 🔤 Alphabetical
-   - 🎨 By Color
-   - ⏰ Recently Used
-
-## 🛠️ Technical Details
-
-### Architecture
-The extension is built with a modular architecture for better maintainability:
-- **Separated CSS**: Styles are organized in dedicated stylesheets
-- **Modular JavaScript**: Code is split into logical modules (storage, search, helpers, constants)
-- **Clean Structure**: Clear separation of concerns for easier debugging and testing
-
-### Permissions Required
-- **Host Permission**: `https://docs.google.com/spreadsheets/*`
-  - Required to inject the content script into Google Sheets
-
-### Project Structure
-```
+```text
 Google Sheets Tab Finder/
 ├── src/
 │   ├── content/
-│   │   ├── storage.js           # LocalStorage management
-│   │   └── (future modular files)
+│   │   ├── main.js              # Main popup logic, tab actions, filters, favorites
+│   │   ├── popup.html           # Popup markup
+│   │   └── storage.js           # Storage helper utilities
 │   ├── styles/
-│   │   ├── popup.css            # Popup modal styles
+│   │   ├── popup.css            # Popup UI, themes, font scaling
 │   │   └── button.css           # Floating button styles
-│   ├── utils/
-│   │   ├── constants.js         # Configuration & constants
-│   │   ├── helpers.js           # Utility helper functions
-│   │   └── search.js            # Search algorithms
-├── icons/                        # Extension icons (16, 32, 48, 128px)
-├── manifest.json                 # Extension configuration (Manifest V3)
-├── content.js                    # Main content script
-├── README.md                     # Documentation
-├── CHANGELOG.md                  # Version history
-├── LICENSE                       # MIT License
-└── .gitignore                    # Git ignore rules
+│   └── utils/
+│       ├── constants.js
+│       ├── helpers.js
+│       └── search.js
+├── icons/
+├── manifest.json
+└── README.md
 ```
 
-### Storage
-The extension uses `localStorage` to persist:
-- **hiddenTabs**: Array of hidden tab names
-- **historyTabs**: Array of recently accessed tab names (max 10)
-- **eaglexBtnVisible**: Boolean for button visibility preference
+## Storage Keys
 
-## 🎨 UI/UX Features
+The extension uses `localStorage`:
+- `hiddenTabs`: hidden tab names.
+- `historyTabs`: recent tab names (max 10).
+- `favoriteTabs`: favorited tab names.
+- `eaglexBtnVisible`: floating button visibility.
+- `popupThemeMode`: `auto | light | dark`.
+- `popupFontScale`: `0.9 | 1 | 1.1 | 1.2 | 1.3`.
 
-- **Modern Gradient Design**: Beautiful glassmorphism effects
-- **Smooth Animations**: Polished transitions and hover effects
-- **Responsive Layout**: Adapts to different screen sizes
-- **Custom Scrollbar**: Styled scrollbar matching the theme
-- **Visual Feedback**: Clear indication of selected, active, and duplicate tabs
+## Permissions
 
-## 🔧 Browser Compatibility
+- Host permission: `https://docs.google.com/spreadsheets/*`
+  - Required to run content scripts inside Google Sheets.
+
+## Browser Support
 
 - Chrome (Manifest V3)
-- Edge (Chromium-based)
+- Edge (Chromium)
 - Brave
 - Other Chromium-based browsers
 
-## 🐛 Known Issues
+## License
 
-- None currently reported
+MIT (see `LICENSE`).
 
-## 📝 Version History
-
-### Version 2.4 (Current)
-- Enhanced search algorithm with score-based matching
-- Improved Vietnamese diacritics support
-- Added bulk hide/show functionality
-- Added statistics dashboard
-- Better keyboard navigation
-- UI/UX improvements with modern design
-
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit issues or pull requests.
-
-## 📄 License
-
-This project is available for personal and commercial use.
-
-## 👨‍💻 Author
+## Author
 
 Lucky
-
-## 📧 Support
-
-For bug reports or feature requests, please open an issue on the GitHub repository.
-
-## 🙏 Acknowledgments
-
-- Icons designed for Google Sheets integration
-- Built with vanilla JavaScript for optimal performance
-- Inspired by the need for better tab management in large spreadsheets
-
----
-
-**Made with ❤️ for Google Sheets power users**

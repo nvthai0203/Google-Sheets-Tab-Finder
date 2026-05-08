@@ -1,9 +1,6 @@
 <div id="popupHeader">
-    <!-- <input type="text" id="searchTabs" placeholder="🎄Merry Christmas ❆❆❆...">
-    <button id="closePopup" title="Close (ESC)">🎅</button> -->
-
-    <input type="text" id="searchTabs" placeholder="🔎 Which tab are you looking for?">
-    <button id="closePopup" title="Close (ESC)">❌</button>
+    <input type="text" id="searchTabs" placeholder="Search sheet tab...">
+    <button id="closePopup" title="Close (ESC)" aria-label="Close popup">×</button>
 </div>
 
 <div class="popup-main-container">
@@ -17,10 +14,22 @@
 
             <div class="bulk-actions-container">
                 <div class="bulk-actions-buttons">
-                    <button id="hideAllTabs">👻 Hide All Visible</button>
+                    <button id="hideAllTabs">Hide Visible</button>
 
-                    <button id="showAllTabs">👀 Show All Hidden</button>
+                    <button id="showAllTabs">Show Hidden</button>
                 </div>
+            </div>
+
+            <div class="quick-filter-container" id="quickFilterContainer">
+                <button class="quick-filter-btn active" data-filter="all">All</button>
+                <button class="quick-filter-btn" data-filter="visible">Visible</button>
+                <button class="quick-filter-btn" data-filter="hidden">Hidden</button>
+                <button class="quick-filter-btn" data-filter="favorite">Favorite</button>
+            </div>
+
+            <div id="undoBar" class="undo-bar" aria-live="polite">
+                <span id="undoMessage">Action completed</span>
+                <button id="undoActionBtn" type="button">Undo</button>
             </div>
 
             <div class="recent-searches-header">
@@ -32,22 +41,38 @@
         </div>
 
         <div class="history-sticky-footer">
+            <div class="font-container">
+                <select id="fontSizeMode" aria-label="Font size">
+                    <option value="0.9">Font: Small (90%)</option>
+                    <option value="1" selected>Font: Default (100%)</option>
+                    <option value="1.1">Font: Medium (110%)</option>
+                    <option value="1.2">Font: Large (120%)</option>
+                    <option value="1.3">Font: XL (130%)</option>
+                </select>
+            </div>
+            <div class="theme-container">
+                <select id="themeMode" aria-label="Theme mode">
+                    <option value="auto">Theme: Auto</option>
+                    <option value="light">Theme: Light</option>
+                    <option value="dark">Theme: Dark</option>
+                </select>
+            </div>
             <div class="sort-container">
                 <select id="sortTabs">
-                    <option value="default">📊 Default Order</option>
-                    <option value="alphabetical">🔤 Alphabetical</option>
-                    <option value="color">🎨 By Color</option>
-                    <option value="recent">⏰ Recently Used</option>
+                    <option value="default">Default Order</option>
+                    <option value="alphabetical">Alphabetical</option>
+                    <option value="color">By Color</option>
+                    <option value="recent">Recently Used</option>
                 </select>
             </div>
             <label class="toggle-container">
                 <span class="toggle-label-text">
-                    Hide/Show Button Show All Tabs
+                    Show floating button
                 </span>
-                <label class="switch">
+                <span class="switch">
                     <input type="checkbox" id="toggleEagleXBtn" checked>
                     <span class="slider round"></span>
-                </label>
+                </span>
             </label>
         </div>
     </div>
