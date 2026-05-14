@@ -78,7 +78,6 @@
 #searchTabs:focus {
     border-color: #667eea;
     box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.15), 0 8px 20px rgba(102, 126, 234, 0.2);
-    background: white;
     transform: translateY(-1px);
 }
 
@@ -1667,6 +1666,9 @@ input:checked + .slider:before {
     --ui-popup-shadow: 0 20px 40px rgba(15, 23, 42, 0.16);
     --ui-button-shadow: 0 8px 18px rgba(37, 99, 235, 0.25);
     --ui-button-shadow-hover: 0 10px 20px rgba(37, 99, 235, 0.3);
+
+    --ui-input-bg: #ffffff;
+    --ui-input-text: #111827;
 }
 
 /* Manual theme override */
@@ -1690,6 +1692,9 @@ input:checked + .slider:before {
     --ui-popup-shadow: 0 20px 40px rgba(15, 23, 42, 0.16);
     --ui-button-shadow: 0 8px 18px rgba(37, 99, 235, 0.25);
     --ui-button-shadow-hover: 0 10px 20px rgba(37, 99, 235, 0.3);
+
+    --ui-input-bg: #ffffff;
+    --ui-input-text: #111827;
 }
 
 #sheetTabPopup[data-theme="dark"] {
@@ -1712,6 +1717,9 @@ input:checked + .slider:before {
     --ui-popup-shadow: 0 18px 36px rgba(2, 6, 23, 0.5);
     --ui-button-shadow: 0 8px 18px rgba(59, 130, 246, 0.35);
     --ui-button-shadow-hover: 0 10px 20px rgba(59, 130, 246, 0.45);
+
+    --ui-input-bg: #1e293b;
+    --ui-input-text: #f8fafc;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -1738,6 +1746,9 @@ input:checked + .slider:before {
         --ui-popup-shadow: 0 18px 36px rgba(2, 6, 23, 0.5);
         --ui-button-shadow: 0 8px 18px rgba(59, 130, 246, 0.35);
         --ui-button-shadow-hover: 0 10px 20px rgba(59, 130, 246, 0.45);
+
+        --ui-input-bg: #1e293b;
+        --ui-input-text: #f8fafc;
     }
 }
 
@@ -1763,9 +1774,11 @@ input:checked + .slider:before {
 }
 
 #searchTabs {
-    color: var(--ui-text);
-    background: var(--ui-bg);
+    color: var(--ui-input-text, var(--ui-text));
+    background: var(--ui-input-bg, var(--ui-bg-subtle));
     border-color: var(--ui-border-strong);
+    caret-color: var(--ui-input-text, var(--ui-text));
+    -webkit-text-fill-color: var(--ui-input-text, var(--ui-text));
 }
 
 #searchTabs::placeholder {
@@ -1774,11 +1787,18 @@ input:checked + .slider:before {
 
 #searchTabs:hover {
     border-color: var(--ui-border-strong);
+    background: var(--ui-input-bg, var(--ui-bg-subtle));
+    color: var(--ui-input-text, var(--ui-text));
+    -webkit-text-fill-color: var(--ui-input-text, var(--ui-text));
 }
 
 #searchTabs:focus {
     border-color: var(--ui-primary);
     box-shadow: 0 0 0 3px var(--ui-primary-ring);
+    background: var(--ui-input-bg, var(--ui-bg-subtle));
+    color: var(--ui-input-text, var(--ui-text));
+    -webkit-text-fill-color: var(--ui-input-text, var(--ui-text));
+    caret-color: var(--ui-input-text, var(--ui-text));
 }
 
 #closePopup {
@@ -1936,4 +1956,19 @@ input:checked + .slider:before {
 #fontSizeMode,
 .toggle-label-text {
     font-size: calc(12px * var(--ui-font-scale));
+}
+
+/*
+ * Search field contrast: older rules set background:white on #searchTabs:focus.
+ * Popup inherits dark text tokens; force themed input surface + text inside #sheetTabPopup.
+ */
+#sheetTabPopup #searchTabs,
+#sheetTabPopup #searchTabs:hover,
+#sheetTabPopup #searchTabs:focus,
+#sheetTabPopup #searchTabs:focus-visible,
+#sheetTabPopup #searchTabs:active {
+    background-color: var(--ui-input-bg, var(--ui-bg-subtle)) !important;
+    color: var(--ui-input-text, var(--ui-text)) !important;
+    -webkit-text-fill-color: var(--ui-input-text, var(--ui-text)) !important;
+    caret-color: var(--ui-input-text, var(--ui-text)) !important;
 }
