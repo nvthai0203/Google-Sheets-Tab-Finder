@@ -88,6 +88,42 @@ function setButtonVisible(visible) {
     localStorage.setItem(CONFIG.STORAGE_KEYS.BUTTON_VISIBLE, String(visible));
 }
 
+function getFavoriteTabs() {
+    return JSON.parse(localStorage.getItem(CONFIG.STORAGE_KEYS.FAVORITE_TABS) || '[]');
+}
+
+function setFavoriteTabs(tabs) {
+    localStorage.setItem(CONFIG.STORAGE_KEYS.FAVORITE_TABS, JSON.stringify(tabs));
+}
+
+function toggleFavoriteTab(tabName) {
+    const favorites = new Set(getFavoriteTabs());
+    if (favorites.has(tabName)) {
+        favorites.delete(tabName);
+    } else {
+        favorites.add(tabName);
+    }
+    setFavoriteTabs([...favorites]);
+    return favorites.has(tabName);
+}
+
+function getThemeMode() {
+    return localStorage.getItem(CONFIG.STORAGE_KEYS.POPUP_THEME_MODE) || 'auto';
+}
+
+function setThemeMode(mode) {
+    localStorage.setItem(CONFIG.STORAGE_KEYS.POPUP_THEME_MODE, mode);
+}
+
+function getPopupFontScale() {
+    const raw = localStorage.getItem(CONFIG.STORAGE_KEYS.POPUP_FONT_SCALE) || '1';
+    return CONFIG.FONT_SCALE_OPTIONS.includes(raw) ? raw : '1';
+}
+
+function setPopupFontScale(scale) {
+    localStorage.setItem(CONFIG.STORAGE_KEYS.POPUP_FONT_SCALE, scale);
+}
+
 // Export for use in other modules
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
@@ -99,6 +135,13 @@ if (typeof module !== 'undefined' && module.exports) {
         addToHistory,
         clearHistory,
         isButtonVisible,
-        setButtonVisible
+        setButtonVisible,
+        getFavoriteTabs,
+        setFavoriteTabs,
+        toggleFavoriteTab,
+        getThemeMode,
+        setThemeMode,
+        getPopupFontScale,
+        setPopupFontScale
     };
 }

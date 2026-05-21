@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Search Tabs - Google Sheets",
-  "version": "3.0",
+  "version": "3.1",
   "description": "This tool helps you quickly find and manage tabs in Google Sheets.",
   "host_permissions": ["https://docs.google.com/spreadsheets/*"],
   "icons": {
@@ -26,6 +26,9 @@
         "src/utils/helpers.js",
         "src/utils/search.js",
         "src/content/storage.js",
+        "src/content/popup-ui.js",
+        "src/content/popup-events.js",
+        "src/content/popup-content.js",
         "src/content/main.js"
       ],
       "css": [

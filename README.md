@@ -72,9 +72,12 @@ A Chrome extension that helps you find, organize, and jump between Google Sheets
 Google Sheets Tab Finder/
 ├── src/
 │   ├── content/
-│   │   ├── main.js              # Main popup logic, tab actions, filters, favorites
-│   │   ├── popup.html           # Popup markup
-│   │   └── storage.js           # Storage helper utilities
+│   │   ├── main.js              # Entry point, init, shortcuts
+│   │   ├── popup-ui.js          # Popup shell and toggle
+│   │   ├── popup-events.js      # Search and settings handlers
+│   │   ├── popup-content.js     # Tab list, history, bulk actions
+│   │   ├── popup.html
+│   │   └── storage.js
 │   ├── styles/
 │   │   ├── popup.css            # Popup UI, themes, font scaling
 │   │   └── button.css           # Floating button styles

@@ -4,8 +4,13 @@ const CONFIG = {
     STORAGE_KEYS: {
         HIDDEN_TABS: 'hiddenTabs',
         HISTORY_TABS: 'historyTabs',
-        BUTTON_VISIBLE: 'eaglexBtnVisible'
+        BUTTON_VISIBLE: 'eaglexBtnVisible',
+        FAVORITE_TABS: 'favoriteTabs',
+        POPUP_THEME_MODE: 'popupThemeMode',
+        POPUP_FONT_SCALE: 'popupFontScale'
     },
+
+    FONT_SCALE_OPTIONS: ['0.9', '1', '1.1', '1.2', '1.3'],
 
     // History settings
     MAX_HISTORY_ITEMS: 10,

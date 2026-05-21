@@ -103,6 +103,33 @@ function getActiveTabName() {
     return activeTab ? activeTab.textContent.trim() : null;
 }
 
+function applyHiddenTabsFromStorage() {
+    const hiddenTabs = getHiddenTabs();
+
+    const tryApply = () => {
+        const tabs = document.querySelectorAll(CONFIG.SELECTORS.SHEET_TAB);
+        if (tabs.length === 0) return false;
+
+        tabs.forEach((tab) => {
+            const nameEl = tab.querySelector(CONFIG.SELECTORS.TAB_NAME);
+            if (nameEl && hiddenTabs.includes(nameEl.textContent.trim())) {
+                tab.style.display = 'none';
+            }
+        });
+
+        const menu = document.querySelector(CONFIG.SELECTORS.CONTEXT_MENU);
+        if (menu) {
+            menu.style.display = 'none';
+        }
+
+        return true;
+    };
+
+    const interval = setInterval(() => {
+        if (tryApply()) clearInterval(interval);
+    }, CONFIG.RETRY_INTERVAL);
+}
+
 // Export for use in other modules
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
@@ -113,6 +140,7 @@ if (typeof module !== 'undefined' && module.exports) {
         simulateClick,
         getAllTabNames,
         isDuplicateTabName,
-        getActiveTabName
+        getActiveTabName,
+        applyHiddenTabsFromStorage
     };
 }
