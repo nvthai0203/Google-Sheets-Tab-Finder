@@ -30,6 +30,7 @@ A Chrome extension that helps you find, organize, and jump between Google Sheets
 - Recent history list (up to 10 items).
 
 ### UI Customization
+- Decorative snowfall overlay on the popup (disabled when `prefers-reduced-motion` is set).
 - Theme modes: `Auto`, `Light`, `Dark`.
 - Font size presets:
   - Small (90%)

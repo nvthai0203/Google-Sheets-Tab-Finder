@@ -46,6 +46,32 @@ function createSheetTabPopup() {
   return popup;
 }
 
+const SNOWFLAKE_COUNT = 36;
+const SNOWFLAKE_GLYPHS = ["❄", "❅", "❆", "•"];
+
+function initPopupSnowfall(popup) {
+  const layer = popup?.querySelector("#snowfall");
+  if (!layer || layer.dataset.ready === "true") return;
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+  const fragment = document.createDocumentFragment();
+  for (let i = 0; i < SNOWFLAKE_COUNT; i += 1) {
+    const flake = document.createElement("span");
+    flake.className = "snowflake";
+    flake.textContent = SNOWFLAKE_GLYPHS[i % SNOWFLAKE_GLYPHS.length];
+    flake.style.setProperty("--snow-left", `${Math.random() * 100}%`);
+    flake.style.setProperty("--snow-duration", `${8 + Math.random() * 10}s`);
+    flake.style.setProperty("--snow-delay", `${-Math.random() * 14}s`);
+    flake.style.setProperty("--snow-size", `${0.55 + Math.random() * 0.95}em`);
+    flake.style.setProperty("--snow-drift", `${-36 + Math.random() * 72}px`);
+    flake.style.setProperty("--snow-opacity", `${0.4 + Math.random() * 0.45}`);
+    fragment.appendChild(flake);
+  }
+
+  layer.appendChild(fragment);
+  layer.dataset.ready = "true";
+}
+
 function loadPopupHtml(popup) {
   return fetch(chrome.runtime.getURL("src/content/popup.html"))
     .then((response) => response.text())
@@ -55,6 +81,7 @@ function loadPopupHtml(popup) {
       popup.dataset.quickFilter = popup.dataset.quickFilter || "all";
       applyPopupTheme(popup);
       applyPopupFontScale(popup);
+      initPopupSnowfall(popup);
       bindPopupHandlers(popup);
       populatePopupContent(popup);
     });

@@ -40,7 +40,7 @@ Google Sheets Tab Finder/
 | File | Responsibility |
 |------|----------------|
 | `main.js` | `addPopupButton`, Ctrl+S shortcut, `window.load` init |
-| `popup-ui.js` | Create/toggle popup, load HTML, theme/font, All Sheets hook |
+| `popup-ui.js` | Create/toggle popup, load HTML, theme/font, snowfall, All Sheets hook |
 | `popup-events.js` | Theme, font, close, search, keyboard nav, quick filters |
 | `popup-content.js` | History, sort, bulk hide/show, tab list rendering |
 | `storage.js` | localStorage |
