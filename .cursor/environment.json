@@ -1,0 +1,4 @@
+{
+  "name": "Google Sheets Tab Finder",
+  "install": "bash .cursor/install.sh"
+}
