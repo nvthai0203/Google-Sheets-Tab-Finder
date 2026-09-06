@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Tab name XSS preview</title>
+  <style>
+    body { font-family: Inter, Segoe UI, sans-serif; margin: 24px; background: #f8fafc; color: #111827; }
+    h1 { font-size: 20px; }
+    .card { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px; max-width: 640px; }
+    .tab-item, .history-item { display: flex; gap: 8px; align-items: center; padding: 8px 0; border-bottom: 1px solid #e5e7eb; }
+    .unsafe { color: #b91c1c; }
+    .safe { color: #166534; }
+    code { background: #f1f5f9; padding: 2px 6px; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <h1>Tab name rendering</h1>
+  <p>Payload: <code id="payload"></code></p>
+  <div class="card">
+    <p class="safe">Safe (textContent) — used in the extension</p>
+    <ul id="safeList"></ul>
+    <p class="unsafe">Unsafe (innerHTML) — old behavior, for contrast only</p>
+    <ul id="unsafeList"></ul>
+  </div>
+  <script>
+    const payload = `<img src="x" onerror="window.__xss=true">`;
+    document.getElementById("payload").textContent = payload;
+
+    const safeLi = document.createElement("li");
+    safeLi.className = "tab-item";
+    const nameEl = document.createElement("strong");
+    nameEl.className = "tab-name";
+    nameEl.textContent = payload;
+    safeLi.appendChild(nameEl);
+    document.getElementById("safeList").appendChild(safeLi);
+
+    const historyLi = document.createElement("li");
+    historyLi.className = "history-item";
+    const historyName = document.createElement("span");
+    historyName.className = "history-tab-name";
+    historyName.textContent = payload;
+    historyLi.appendChild(historyName);
+    document.getElementById("safeList").appendChild(historyLi);
+
+    const unsafeLi = document.createElement("li");
+    unsafeLi.className = "tab-item";
+    unsafeLi.innerHTML = `<strong class="tab-name">${payload}</strong>`;
+    document.getElementById("unsafeList").appendChild(unsafeLi);
+
+    document.title = window.__xss ? "XSS fired" : "Tab name XSS preview";
+  </script>
+</body>
+</html>

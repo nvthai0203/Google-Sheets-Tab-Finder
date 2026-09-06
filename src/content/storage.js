@@ -1,11 +1,37 @@
 // LocalStorage Management Functions
 
+function scopedStorageKey(baseKey, spreadsheetId = getSpreadsheetId()) {
+    return spreadsheetId ? `${CONFIG.STORAGE_PREFIX}:${baseKey}:${spreadsheetId}` : baseKey;
+}
+
+function readJsonArray(key) {
+    try {
+        const raw = localStorage.getItem(key);
+        if (raw == null) return null;
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed) ? parsed : null;
+    } catch (error) {
+        console.warn("⚠️ Failed to parse localStorage key:", key, error);
+        return null;
+    }
+}
+
+function getScopedTabNames(baseKey) {
+    const scoped = readJsonArray(scopedStorageKey(baseKey));
+    if (scoped) return scoped;
+    return readJsonArray(baseKey) || [];
+}
+
+function setScopedTabNames(baseKey, tabs) {
+    localStorage.setItem(scopedStorageKey(baseKey), JSON.stringify(tabs));
+}
+
 /**
  * Get hidden tabs from localStorage
  * @returns {string[]} Array of hidden tab names
  */
 function getHiddenTabs() {
-    return JSON.parse(localStorage.getItem(CONFIG.STORAGE_KEYS.HIDDEN_TABS)) || [];
+    return getScopedTabNames(CONFIG.STORAGE_KEYS.HIDDEN_TABS);
 }
 
 /**
@@ -13,7 +39,7 @@ function getHiddenTabs() {
  * @param {string[]} tabs - Array of tab names to hide
  */
 function setHiddenTabs(tabs) {
-    localStorage.setItem(CONFIG.STORAGE_KEYS.HIDDEN_TABS, JSON.stringify(tabs));
+    setScopedTabNames(CONFIG.STORAGE_KEYS.HIDDEN_TABS, tabs);
 }
 
 /**
@@ -42,7 +68,7 @@ function showTab(tabName) {
  * @returns {string[]} Array of recent tab names
  */
 function getHistoryTabs() {
-    return JSON.parse(localStorage.getItem(CONFIG.STORAGE_KEYS.HISTORY_TABS)) || [];
+    return getScopedTabNames(CONFIG.STORAGE_KEYS.HISTORY_TABS);
 }
 
 /**
@@ -61,14 +87,14 @@ function addToHistory(tabName) {
         history = history.slice(0, CONFIG.MAX_HISTORY_ITEMS);
     }
     
-    localStorage.setItem(CONFIG.STORAGE_KEYS.HISTORY_TABS, JSON.stringify(history));
+    setScopedTabNames(CONFIG.STORAGE_KEYS.HISTORY_TABS, history);
 }
 
 /**
  * Clear history tabs
  */
 function clearHistory() {
-    localStorage.removeItem(CONFIG.STORAGE_KEYS.HISTORY_TABS);
+    localStorage.removeItem(scopedStorageKey(CONFIG.STORAGE_KEYS.HISTORY_TABS));
 }
 
 /**
@@ -89,11 +115,11 @@ function setButtonVisible(visible) {
 }
 
 function getFavoriteTabs() {
-    return JSON.parse(localStorage.getItem(CONFIG.STORAGE_KEYS.FAVORITE_TABS) || '[]');
+    return getScopedTabNames(CONFIG.STORAGE_KEYS.FAVORITE_TABS);
 }
 
 function setFavoriteTabs(tabs) {
-    localStorage.setItem(CONFIG.STORAGE_KEYS.FAVORITE_TABS, JSON.stringify(tabs));
+    setScopedTabNames(CONFIG.STORAGE_KEYS.FAVORITE_TABS, tabs);
 }
 
 function toggleFavoriteTab(tabName) {
@@ -127,6 +153,10 @@ function setPopupFontScale(scale) {
 // Export for use in other modules
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
+        scopedStorageKey,
+        readJsonArray,
+        getScopedTabNames,
+        setScopedTabNames,
         getHiddenTabs,
         setHiddenTabs,
         hideTab,
