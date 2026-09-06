@@ -94,9 +94,9 @@ Google Sheets Tab Finder/
 ## Storage Keys
 
 The extension uses `localStorage`:
-- `hiddenTabs`: hidden tab names.
-- `historyTabs`: recent tab names (max 10).
-- `favoriteTabs`: favorited tab names.
+- `gstf:hiddenTabs:{spreadsheetId}`: hidden tab names for one spreadsheet (falls back to legacy `hiddenTabs`).
+- `gstf:historyTabs:{spreadsheetId}`: recent tab names for one spreadsheet, max 10 (falls back to legacy `historyTabs`).
+- `gstf:favoriteTabs:{spreadsheetId}`: favorited tab names for one spreadsheet (falls back to legacy `favoriteTabs`).
 - `eaglexBtnVisible`: floating button visibility.
 - `popupThemeMode`: `auto | light | dark`.
 - `popupFontScale`: `0.9 | 1 | 1.1 | 1.2 | 1.3`.

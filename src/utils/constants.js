@@ -10,6 +10,8 @@ const CONFIG = {
         POPUP_FONT_SCALE: 'popupFontScale'
     },
 
+    STORAGE_PREFIX: 'gstf',
+
     FONT_SCALE_OPTIONS: ['0.9', '1', '1.1', '1.2', '1.3'],
 
     // History settings

@@ -5,6 +5,17 @@
  * @param {string} text - Text to normalize
  * @returns {string} Normalized text
  */
+/**
+ * Extract the Google Sheets spreadsheet ID from a URL pathname.
+ * Supports /spreadsheets/d/{id} and /spreadsheets/u/0/d/{id}.
+ * @param {string} [pathname]
+ * @returns {string} Spreadsheet ID or empty string
+ */
+function getSpreadsheetId(pathname = typeof location !== "undefined" ? location.pathname : "") {
+    const match = String(pathname).match(/\/spreadsheets\/(?:u\/\d+\/)?d\/([a-zA-Z0-9-_]+)/);
+    return match ? match[1] : "";
+}
+
 function normalize(text) {
     return text
         .toLowerCase()
@@ -133,6 +144,7 @@ function applyHiddenTabsFromStorage() {
 // Export for use in other modules
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
+        getSpreadsheetId,
         normalize,
         debounce,
         getTabsContainer,
