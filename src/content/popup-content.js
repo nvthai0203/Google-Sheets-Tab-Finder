@@ -37,18 +37,26 @@ function syncTabListFromHiddenSet(hiddenSet, searchInput, updateStats) {
 function renderHistoryList(popup, historyList) {
   if (!historyList) return;
 
-  historyList.innerHTML = "";
+  historyList.replaceChildren();
   const historyTabs = getHistoryTabs();
 
   historyTabs.forEach((tabName, index) => {
     const li = document.createElement("li");
     li.classList.add("history-item");
-    li.innerHTML = `
-      <div class="history-item-content">
-        <span class="history-rank">${index + 1}</span>
-        <span class="history-tab-name">${tabName}</span>
-      </div>
-    `;
+
+    const content = document.createElement("div");
+    content.className = "history-item-content";
+
+    const rank = document.createElement("span");
+    rank.className = "history-rank";
+    rank.textContent = String(index + 1);
+
+    const name = document.createElement("span");
+    name.className = "history-tab-name";
+    name.textContent = tabName;
+
+    content.append(rank, name);
+    li.appendChild(content);
     li.title = `Click to switch to "${tabName}"`;
 
     li.addEventListener("click", () => {
@@ -164,7 +172,7 @@ function ensureBulkActions(popup, searchInput) {
     const hiddenCount = getActualHiddenCount();
     const statsEl = popup.querySelector("#tabStats");
     if (statsEl) {
-      statsEl.innerHTML = `Total: ${totalTabs} | Hidden: ${hiddenCount} | Visible: ${
+      statsEl.textContent = `Total: ${totalTabs} | Hidden: ${hiddenCount} | Visible: ${
         totalTabs - hiddenCount
       }`;
     }
@@ -306,14 +314,28 @@ function renderTabList(popup, tabList, searchInput, updateStats) {
       li.title = tabText;
     }
 
-    li.innerHTML = `
-      <input type="checkbox" class="tabCheckbox" ${isChecked ? "checked" : ""}>
-      <button class="favorite-btn ${
-        isFavorite ? "is-favorite" : ""
-      }" title="Toggle favorite" aria-label="Toggle favorite">★</button>
-      <span class="tab-color-dot" style='color: ${color};'>●</span>
-      <strong class="tab-name" style='color: ${textColor};'>${tabText}</strong>
-    `;
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.className = "tabCheckbox";
+    checkbox.checked = isChecked;
+
+    const favoriteBtn = document.createElement("button");
+    favoriteBtn.className = isFavorite ? "favorite-btn is-favorite" : "favorite-btn";
+    favoriteBtn.title = "Toggle favorite";
+    favoriteBtn.setAttribute("aria-label", "Toggle favorite");
+    favoriteBtn.textContent = "★";
+
+    const colorDot = document.createElement("span");
+    colorDot.className = "tab-color-dot";
+    colorDot.textContent = "●";
+    colorDot.style.color = color;
+
+    const nameEl = document.createElement("strong");
+    nameEl.className = "tab-name";
+    nameEl.textContent = tabText;
+    nameEl.style.color = textColor;
+
+    li.append(checkbox, favoriteBtn, colorDot, nameEl);
     li.classList.add("tab-item");
     li.dataset.isHidden = isChecked ? "true" : "false";
     li.dataset.isFavorite = isFavorite ? "true" : "false";
@@ -332,10 +354,7 @@ function renderTabList(popup, tabList, searchInput, updateStats) {
       hidePopup(popup);
     });
 
-    const checkbox = li.querySelector(".tabCheckbox");
-    const favoriteBtn = li.querySelector(".favorite-btn");
-
-    favoriteBtn?.addEventListener("click", (e) => {
+    favoriteBtn.addEventListener("click", (e) => {
       e.stopPropagation();
       const favorite = toggleFavoriteTab(tabText);
       li.dataset.isFavorite = favorite ? "true" : "false";

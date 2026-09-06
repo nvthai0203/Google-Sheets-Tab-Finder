@@ -5,6 +5,13 @@ All notable changes to the Google Sheets Tab Finder extension will be documented
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.3.0] - 2026-09-06
+
+### Fixed
+- **Recent Searches persist**: Stopped clearing history on every page load
+- **XSS in tab names**: Render history and tab labels with `textContent` instead of unescaped `innerHTML`
+- **Per-spreadsheet storage**: Scope `hiddenTabs`, `historyTabs`, and `favoriteTabs` to the spreadsheet ID so workbooks no longer share hide/favorite/history state. Legacy unscoped keys are still read as a fallback
+
 ## [3.2.0] - 2026-09-05
 
 ### Added
