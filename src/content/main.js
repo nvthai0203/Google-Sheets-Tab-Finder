@@ -22,7 +22,6 @@ document.addEventListener("keydown", (event) => {
 });
 
 window.addEventListener("load", () => {
-  clearHistory();
   setTimeout(() => {
     addPopupButton();
     applyHiddenTabsFromStorage();
