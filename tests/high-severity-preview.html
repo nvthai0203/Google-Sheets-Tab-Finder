@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>High-severity fixes preview</title>
+  <style>
+    body { font-family: Inter, Segoe UI, sans-serif; margin: 24px; background: #0f172a; color: #e2e8f0; }
+    h1 { font-size: 22px; margin: 0 0 8px; }
+    p { color: #94a3b8; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; max-width: 980px; }
+    .card { background: #111827; border: 1px solid #334155; border-radius: 12px; padding: 16px; }
+    .pass { color: #4ade80; font-weight: 700; }
+    .fail { color: #f87171; font-weight: 700; }
+    ul { padding-left: 18px; }
+    .tab-item, .history-item { display: flex; gap: 8px; align-items: center; padding: 8px 0; border-bottom: 1px solid #1f2937; }
+    code { color: #93c5fd; }
+  </style>
+</head>
+<body>
+  <h1>High-severity fixes</h1>
+  <p>Runs the real storage helpers against two spreadsheet IDs, then renders a hostile tab name with <code>textContent</code>.</p>
+  <div class="grid">
+    <section class="card">
+      <h2>Storage isolation + history</h2>
+      <div id="storageResults"></div>
+    </section>
+    <section class="card">
+      <h2>XSS-safe tab names</h2>
+      <ul id="safeList"></ul>
+      <p id="xssResult"></p>
+    </section>
+  </div>
+  <script>
+    window.localStorage.clear();
+  </script>
+  <script src="../src/utils/constants.js"></script>
+  <script src="../src/utils/helpers.js"></script>
+  <script src="../src/content/storage.js"></script>
+  <script>
+    const results = [];
+    function setPath(id) {
+      history.replaceState({}, "", `/spreadsheets/d/${id}/edit`);
+    }
+
+    setPath("SHEET_A");
+    setHiddenTabs(["Payroll"]);
+    addToHistory("Sales Q1");
+    setFavoriteTabs(["Inventory"]);
+
+    const afterA = {
+      hidden: getHiddenTabs(),
+      history: getHistoryTabs(),
+      favorites: getFavoriteTabs(),
+    };
+
+    setPath("SHEET_B");
+    const onB = {
+      hidden: getHiddenTabs(),
+      history: getHistoryTabs(),
+      favorites: getFavoriteTabs(),
+    };
+    setHiddenTabs(["Marketing Plan"]);
+
+    setPath("SHEET_A");
+    const backToA = {
+      hidden: getHiddenTabs(),
+      history: getHistoryTabs(),
+      favorites: getFavoriteTabs(),
+    };
+
+    const checks = [
+      ["Sheet A stores Payroll / Sales Q1 / Inventory", afterA.hidden[0] === "Payroll" && afterA.history[0] === "Sales Q1" && afterA.favorites[0] === "Inventory"],
+      ["Sheet B does not inherit Sheet A state", onB.hidden.length === 0 && onB.history.length === 0 && onB.favorites.length === 0],
+      ["Returning to Sheet A keeps its history", backToA.history[0] === "Sales Q1"],
+    ];
+
+    document.getElementById("storageResults").innerHTML = checks.map(([label, ok]) => {
+      return `<p class="${ok ? "pass" : "fail"}">${ok ? "PASS" : "FAIL"} — ${label}</p>`;
+    }).join("") + `<p>Sheet A after return: hidden=${JSON.stringify(backToA.hidden)}, history=${JSON.stringify(backToA.history)}</p>`;
+
+    const payload = `<img src="x" onerror="window.__xss=true">`;
+    const nameEl = document.createElement("strong");
+    nameEl.className = "tab-name";
+    nameEl.textContent = payload;
+    const li = document.createElement("li");
+    li.className = "tab-item";
+    li.appendChild(nameEl);
+    document.getElementById("safeList").appendChild(li);
+
+    const imgCount = document.querySelectorAll("#safeList img").length;
+    const xssFired = Boolean(window.__xss);
+    const xssOk = imgCount === 0 && !xssFired && nameEl.textContent === payload;
+    document.getElementById("xssResult").className = xssOk ? "pass" : "fail";
+    document.getElementById("xssResult").textContent = xssOk
+      ? "PASS — payload is shown as text, no img, no onerror"
+      : "FAIL — payload was interpreted as HTML";
+  </script>
+</body>
+</html>
