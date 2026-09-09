@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Popup snowfall preview</title>
+  <link rel="stylesheet" href="../src/styles/popup.css">
+  <style>
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: #6b7280;
+      font-family: Inter, "Segoe UI", sans-serif;
+    }
+    #controls {
+      position: fixed;
+      top: 12px;
+      left: 12px;
+      z-index: 100001;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    #controls button,
+    #controls input {
+      font: inherit;
+      padding: 6px 10px;
+      border-radius: 8px;
+      border: 1px solid #cbd5e1;
+    }
+    #colorReport {
+      position: fixed;
+      top: 12px;
+      right: 12px;
+      z-index: 100001;
+      background: #0f172a;
+      color: #e2e8f0;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font: 13px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    #sheetTabPopup {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div id="controls">
+    <button type="button" id="lightBtn">Light</button>
+    <button type="button" id="darkBtn">Dark</button>
+    <input id="typeInSearch" placeholder="Type in search" aria-label="Type in search">
+  </div>
+  <div id="colorReport">flake color: …</div>
+  <div id="sheetTabPopup" data-theme="light"></div>
+  <script>
+    const SNOWFLAKE_COUNT = 36;
+    const SNOWFLAKE_GLYPHS = ["❄", "❅", "❆", "•"];
+    const LIGHT = "rgb(153, 255, 255)";
+    const DARK = "rgb(255, 255, 255)";
+
+    function initPopupSnowfall(popup) {
+      const layer = popup.querySelector("#snowfall");
+      if (!layer || layer.dataset.ready === "true") return;
+      const fragment = document.createDocumentFragment();
+      for (let i = 0; i < SNOWFLAKE_COUNT; i += 1) {
+        const flake = document.createElement("span");
+        flake.className = "snowflake";
+        flake.textContent = SNOWFLAKE_GLYPHS[i % SNOWFLAKE_GLYPHS.length];
+        flake.style.setProperty("--snow-left", `${Math.random() * 100}%`);
+        flake.style.setProperty("--snow-duration", `${8 + Math.random() * 10}s`);
+        flake.style.setProperty("--snow-delay", `${-Math.random() * 14}s`);
+        flake.style.setProperty("--snow-size", `${0.55 + Math.random() * 0.95}em`);
+        flake.style.setProperty("--snow-drift", `${-36 + Math.random() * 72}px`);
+        flake.style.setProperty("--snow-opacity", "0.85");
+        fragment.appendChild(flake);
+      }
+      layer.appendChild(fragment);
+      layer.dataset.ready = "true";
+    }
+
+    function reportFlakeColor(popup) {
+      const flake = popup.querySelector(".snowflake");
+      const theme = popup.getAttribute("data-theme");
+      const color = flake ? getComputedStyle(flake).color : "none";
+      const expected = theme === "dark" ? DARK : LIGHT;
+      const ok = color === expected;
+      const report = document.getElementById("colorReport");
+      report.textContent = `${theme}: ${color} ${ok ? "PASS" : "FAIL"} (want ${expected})`;
+      report.dataset.ok = String(ok);
+      report.style.color = ok ? "#4ade80" : "#f87171";
+    }
+
+    function setTheme(popup, theme) {
+      popup.setAttribute("data-theme", theme);
+      const select = popup.querySelector("#themeMode");
+      if (select) select.value = theme;
+      requestAnimationFrame(() => reportFlakeColor(popup));
+    }
+
+    function seedDemoContent(popup) {
+      const tabs = ["Sales Q1", "Inventory", "Payroll", "Marketing Plan"];
+      const list = popup.querySelector("#tabList");
+      tabs.forEach((name) => {
+        const li = document.createElement("li");
+        li.className = "tab-item";
+        const dot = document.createElement("span");
+        dot.className = "tab-color-dot";
+        dot.textContent = "●";
+        const label = document.createElement("span");
+        label.className = "tab-name";
+        label.textContent = name;
+        li.append(dot, label);
+        list.appendChild(li);
+      });
+      popup.querySelector("#tabStats").textContent = "4 tabs • 0 hidden • 4 visible";
+      const history = popup.querySelector("#historyList");
+      const item = document.createElement("li");
+      item.className = "history-item";
+      item.textContent = "1 Sales Q1";
+      history.appendChild(item);
+      popup.querySelector("#searchTabs").value = "Sales";
+      popup.querySelector("#themeMode").value = "light";
+    }
+
+    fetch("../src/content/popup.html")
+      .then((res) => res.text())
+      .then((html) => {
+        const popup = document.getElementById("sheetTabPopup");
+        popup.innerHTML = html;
+        seedDemoContent(popup);
+        initPopupSnowfall(popup);
+        setTheme(popup, "light");
+        document.getElementById("lightBtn").addEventListener("click", () => setTheme(popup, "light"));
+        document.getElementById("darkBtn").addEventListener("click", () => setTheme(popup, "dark"));
+        popup.querySelector("#themeMode").addEventListener("change", (e) => setTheme(popup, e.target.value === "dark" ? "dark" : "light"));
+        document.getElementById("typeInSearch").addEventListener("input", (e) => {
+          popup.querySelector("#searchTabs").value = e.target.value;
+        });
+      });
+  </script>
+</body>
+</html>
