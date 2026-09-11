@@ -25,13 +25,13 @@ function snowFlakeColor(block) {
 
 assert.strictEqual(
   snowFlakeColor(blockAfter(":root {")),
-  "#99FFFF",
-  "default :root flakes should be light cyan"
+  "#009FE3",
+  "default :root flakes should be #009FE3"
 );
 assert.strictEqual(
   snowFlakeColor(blockAfter('#sheetTabPopup[data-theme="light"]')),
-  "#99FFFF",
-  "light theme flakes should be #99FFFF"
+  "#009FE3",
+  "light theme flakes should be #009FE3"
 );
 assert.strictEqual(
   snowFlakeColor(blockAfter('#sheetTabPopup[data-theme="dark"]')),
@@ -49,7 +49,7 @@ const flakeVars = [...css.matchAll(/--snow-flake:\s*([^;]+);/g)].map((m) =>
 );
 assert.deepStrictEqual(
   new Set(flakeVars),
-  new Set(["#99FFFF", "#FFFFFF"]),
+  new Set(["#009FE3", "#FFFFFF"]),
   `unexpected snowflake colors: ${flakeVars.join(", ")}`
 );
 

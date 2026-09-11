@@ -437,9 +437,9 @@ input:checked + .slider:before {
     left: var(--snow-left, 50%);
     font-size: var(--snow-size, 0.8em);
     line-height: 1;
-    color: var(--snow-flake, #99FFFF);
+    color: var(--snow-flake, #009FE3);
     opacity: var(--snow-opacity, 0.7);
-    text-shadow: 0 0 6px color-mix(in srgb, var(--snow-flake, #99FFFF) 55%, transparent);
+    text-shadow: 0 0 6px color-mix(in srgb, var(--snow-flake, #009FE3) 55%, transparent);
     user-select: none;
     animation: snowfall-fall var(--snow-duration, 12s) linear var(--snow-delay, 0s) infinite;
 }
@@ -1199,7 +1199,7 @@ input:checked + .slider:before {
 
     --ui-input-bg: #ffffff;
     --ui-input-text: #111827;
-    --snow-flake: #99FFFF;
+    --snow-flake: #009FE3;
 }
 
 /* Manual theme override */
@@ -1226,7 +1226,7 @@ input:checked + .slider:before {
 
     --ui-input-bg: #ffffff;
     --ui-input-text: #111827;
-    --snow-flake: #99FFFF;
+    --snow-flake: #009FE3;
 }
 
 #sheetTabPopup[data-theme="dark"] {
