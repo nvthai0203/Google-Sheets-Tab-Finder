@@ -5,6 +5,11 @@ All notable changes to the Google Sheets Tab Finder extension will be documented
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.3.3] - 2026-10-27
+
+### Changed
+- **Sheet scrollbars**: Horizontal and vertical scrollbar thumbs are `#00FF7F` instead of the purple `#667eea` → `#764ba2` gradient. These rules are unscoped because `popup.css` is injected into Google Sheets, so they restyle the spreadsheet scrollbars as well as the popup.
+
 ## [3.3.2] - 2026-09-11
 
 ### Changed
