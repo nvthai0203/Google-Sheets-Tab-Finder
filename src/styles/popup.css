@@ -389,10 +389,19 @@ input:checked + .slider:before {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
 }
 
-/* Scrollbar Styling */
+/* Scrollbar Styling
+ * popup.css is injected as a content-script stylesheet on Google Sheets,
+ * so unscoped ::-webkit-scrollbar rules restyle every scrollbar on the page
+ * (sheet grid + popup), not only the extension UI.
+ */
+html {
+    scrollbar-width: thin;
+    scrollbar-color: #008B45 #f1f5f9;
+}
+
 ::-webkit-scrollbar {
     width: 6px;
-    height: 0px;
+    height: 6px;
 }
 
 ::-webkit-scrollbar-track {
@@ -401,12 +410,12 @@ input:checked + .slider:before {
 }
 
 ::-webkit-scrollbar-thumb {
-    background: linear-gradient(135deg, #667eea, #764ba2);
+    background: #00FF7F;
     border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(135deg, #5a67d8, #6b46c1);
+    background: #00E070;
 }
 
 /* Popup entrance */
