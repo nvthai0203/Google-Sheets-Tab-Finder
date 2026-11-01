@@ -6,6 +6,30 @@ function bindPopupHandlers(popup) {
   bindQuickFilters(popup);
 }
 
+function bindFloatingButtonToggle(popup) {
+  const toggleBtn = popup?.querySelector("#toggleEagleXBtn");
+  if (!toggleBtn) return false;
+
+  const syncToggle = () => {
+    const devBtn = document.getElementById("openSheetPopup");
+    toggleBtn.checked = devBtn ? devBtn.style.display !== "none" : isButtonVisible();
+  };
+
+  if (!toggleBtn.dataset.bound) {
+    toggleBtn.dataset.bound = "true";
+    toggleBtn.addEventListener("change", function () {
+      const devBtn = document.getElementById("openSheetPopup");
+      if (devBtn) {
+        devBtn.style.display = this.checked ? "block" : "none";
+      }
+      setButtonVisible(this.checked);
+    });
+  }
+
+  syncToggle();
+  return true;
+}
+
 function bindPopupSettings(popup) {
   const themeModeSelect = popup.querySelector("#themeMode");
   if (themeModeSelect && !themeModeSelect.dataset.bound) {
@@ -29,22 +53,55 @@ function bindPopupSettings(popup) {
     });
   }
 
-  const toggleBtn = popup.querySelector("#toggleEagleXBtn");
-  const devBtn = document.getElementById("openSheetPopup");
-  if (toggleBtn && devBtn && !toggleBtn.dataset.bound) {
-    toggleBtn.dataset.bound = "true";
-    toggleBtn.checked = devBtn.style.display !== "none";
-    toggleBtn.addEventListener("change", function () {
-      devBtn.style.display = this.checked ? "block" : "none";
-      setButtonVisible(this.checked);
-    });
-  }
+  bindFloatingButtonToggle(popup);
 
   const closeBtn = document.getElementById("closePopup");
   if (closeBtn && !closeBtn.dataset.bound) {
     closeBtn.dataset.bound = "true";
     closeBtn.addEventListener("click", () => hidePopup(popup));
   }
+}
+
+function refreshTabListView(popup) {
+  const searchInput = popup.querySelector("#searchTabs");
+  const tabListEl = popup.querySelector("#tabList");
+  if (!tabListEl) return [];
+
+  const q = searchInput?.value || "";
+  const currentQuickFilter = popup.dataset.quickFilter || "all";
+  const items = [...tabListEl.querySelectorAll("li")].filter((li) => li.id !== "tabNotFound");
+  const hits = filterAndSortTabs(q, items, { quickFilter: currentQuickFilter });
+
+  const ordered = isBlankSearchQuery(q)
+    ? sortTabItems(hits.map((hit) => hit.li), popup.querySelector("#sortTabs")?.value || "default")
+    : hits.map((hit) => hit.li);
+
+  ordered.forEach((li) => tabListEl.appendChild(li));
+
+  let notFound = document.getElementById("tabNotFound");
+  if (ordered.length === 0 && !isBlankSearchQuery(q)) {
+    if (!notFound) {
+      notFound = document.createElement("li");
+      notFound.id = "tabNotFound";
+      notFound.textContent = "🔍 Not found this Sheet";
+      notFound.style.textAlign = "center";
+      notFound.style.padding = "20px";
+      notFound.style.color = "#888";
+      notFound.style.fontSize = "18px";
+      tabListEl.appendChild(notFound);
+    }
+  } else if (notFound) {
+    notFound.remove();
+  }
+
+  popupSelectedIndex = 0;
+  if (ordered.length > 0) {
+    ordered.forEach((li) => li.classList.remove("selected-tab"));
+    ordered[0].classList.add("selected-tab");
+    ordered[0].scrollIntoView?.({ block: "nearest" });
+  }
+
+  return ordered;
 }
 
 function bindSearchHandlers(popup) {
@@ -54,55 +111,7 @@ function bindSearchHandlers(popup) {
   searchInput.dataset.bound = "true";
 
   searchInput.addEventListener("input", () => {
-    const q = searchInput.value;
-    const currentQuickFilter = popup.dataset.quickFilter || "all";
-    const allLis = [...document.querySelectorAll("#sheetTabPopup #tabList li")];
-    const items = allLis.filter((li) => li.id !== "tabNotFound");
-
-    const scored = [];
-    items.forEach((li) => {
-      const tabText = li.querySelector("strong").textContent;
-      const s = scoreMatch(q, tabText);
-      li.dataset.searchScore = String(s);
-      const isHidden = li.dataset.isHidden === "true";
-      const isFavorite = li.dataset.isFavorite === "true";
-      const passQuickFilter =
-        currentQuickFilter === "all" ||
-        (currentQuickFilter === "visible" && !isHidden) ||
-        (currentQuickFilter === "hidden" && isHidden) ||
-        (currentQuickFilter === "favorite" && isFavorite);
-      const isHit = (s > 0 || q === "") && passQuickFilter;
-      li.style.display = isHit ? "block" : "none";
-      li.classList.remove("selected-tab");
-      if (isHit) scored.push({ li, s });
-    });
-
-    scored.sort((a, b) => b.s - a.s);
-
-    const tabListEl = document.querySelector("#sheetTabPopup #tabList");
-    scored.forEach(({ li }) => tabListEl.appendChild(li));
-
-    let notFound = document.getElementById("tabNotFound");
-    if (scored.length === 0 && q !== "") {
-      if (!notFound) {
-        notFound = document.createElement("li");
-        notFound.id = "tabNotFound";
-        notFound.textContent = "🔍 Not found this Sheet";
-        notFound.style.textAlign = "center";
-        notFound.style.padding = "20px";
-        notFound.style.color = "#888";
-        notFound.style.fontSize = "18px";
-        tabListEl.appendChild(notFound);
-      }
-    } else if (notFound) {
-      notFound.remove();
-    }
-
-    popupSelectedIndex = 0;
-    if (scored.length > 0) {
-      scored[0].li.classList.add("selected-tab");
-      scored[0].li.scrollIntoView({ block: "nearest" });
-    }
+    refreshTabListView(popup);
   });
 
   searchInput.addEventListener("keydown", (e) => {
@@ -139,7 +148,6 @@ function bindQuickFilters(popup) {
   if (!quickFilterButtons.length || popup.dataset.filtersBound) return;
 
   popup.dataset.filtersBound = "true";
-  const searchInput = popup.querySelector("#searchTabs");
 
   quickFilterButtons.forEach((button) => {
     button.addEventListener("click", () => {
@@ -148,7 +156,18 @@ function bindQuickFilters(popup) {
       quickFilterButtons.forEach((btn) =>
         btn.classList.toggle("active", btn === button)
       );
-      searchInput?.dispatchEvent(new Event("input"));
+      refreshTabListView(popup);
     });
   });
+}
+
+if (typeof module !== "undefined" && module.exports) {
+  module.exports = {
+    bindPopupHandlers,
+    bindFloatingButtonToggle,
+    bindPopupSettings,
+    refreshTabListView,
+    bindSearchHandlers,
+    bindQuickFilters
+  };
 }

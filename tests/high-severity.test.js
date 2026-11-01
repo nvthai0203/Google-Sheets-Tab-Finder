@@ -11,7 +11,13 @@ function createMemoryStorage() {
       map.set(String(key), String(value));
     },
     removeItem(key) {
-      map.delete(String(key));
+      map.delete(key);
+    },
+    get length() {
+      return map.size;
+    },
+    key(index) {
+      return [...map.keys()][index] ?? null;
     },
   };
 }
@@ -69,7 +75,7 @@ function testStorageIsScopedPerSpreadsheet() {
   assert.deepStrictEqual(sheetBAgain.getHiddenTabs(), ["Marketing Plan"]);
 }
 
-function testLegacyKeysAreFallbackOnly() {
+function testLegacyKeysMigrateOnceThenLeaveOtherSheetsEmpty() {
   const shared = createMemoryStorage();
   shared.setItem("hiddenTabs", JSON.stringify(["Legacy Hidden"]));
   shared.setItem("historyTabs", JSON.stringify(["Legacy History"]));
@@ -79,10 +85,26 @@ function testLegacyKeysAreFallbackOnly() {
   assert.deepStrictEqual(storage.getHiddenTabs(), ["Legacy Hidden"]);
   assert.deepStrictEqual(storage.getHistoryTabs(), ["Legacy History"]);
   assert.deepStrictEqual(storage.getFavoriteTabs(), ["Legacy Fav"]);
+  assert.strictEqual(shared.getItem("hiddenTabs"), null);
+  assert.strictEqual(shared.getItem("historyTabs"), null);
+  assert.strictEqual(shared.getItem("favoriteTabs"), null);
 
   storage.setHiddenTabs(["Scoped Hidden"]);
   assert.deepStrictEqual(storage.getHiddenTabs(), ["Scoped Hidden"]);
-  assert.strictEqual(shared.getItem("hiddenTabs"), JSON.stringify(["Legacy Hidden"]));
+
+  const sheetB = loadStorageForSheet("/spreadsheets/d/SHEET_B/edit", shared);
+  assert.deepStrictEqual(sheetB.getHiddenTabs(), []);
+  assert.deepStrictEqual(sheetB.getHistoryTabs(), []);
+  assert.deepStrictEqual(sheetB.getFavoriteTabs(), []);
+}
+
+function testLeftoverLegacyIgnoredWhenAnyScopedExists() {
+  const shared = createMemoryStorage();
+  shared.setItem("gstf:hiddenTabs:SHEET_A", JSON.stringify(["Payroll"]));
+  shared.setItem("hiddenTabs", JSON.stringify(["Legacy Hidden"]));
+
+  const sheetB = loadStorageForSheet("/spreadsheets/d/SHEET_B/edit", shared);
+  assert.deepStrictEqual(sheetB.getHiddenTabs(), []);
 }
 
 function testCorruptJsonDoesNotThrow() {
@@ -101,10 +123,24 @@ function testHistorySurvivesReloadWithoutClear() {
   assert.deepStrictEqual(afterReload.getHistoryTabs(), ["Sales Q1"]);
 }
 
+function testClearHistoryDoesNotRestoreLegacy() {
+  const shared = createMemoryStorage();
+  shared.setItem("historyTabs", JSON.stringify(["Legacy History"]));
+  const storage = loadStorageForSheet("/spreadsheets/d/SHEET_A/edit", shared);
+  assert.deepStrictEqual(storage.getHistoryTabs(), ["Legacy History"]);
+  storage.clearHistory();
+  assert.deepStrictEqual(storage.getHistoryTabs(), []);
+
+  const afterReload = loadStorageForSheet("/spreadsheets/d/SHEET_A/edit", shared);
+  assert.deepStrictEqual(afterReload.getHistoryTabs(), []);
+}
+
 testSpreadsheetIdParsing();
 testStorageIsScopedPerSpreadsheet();
-testLegacyKeysAreFallbackOnly();
+testLegacyKeysMigrateOnceThenLeaveOtherSheetsEmpty();
+testLeftoverLegacyIgnoredWhenAnyScopedExists();
 testCorruptJsonDoesNotThrow();
 testHistorySurvivesReloadWithoutClear();
+testClearHistoryDoesNotRestoreLegacy();
 
 console.log("high-severity tests passed");
