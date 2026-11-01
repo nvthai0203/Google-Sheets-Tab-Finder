@@ -2,13 +2,15 @@
 
 Ghi lại các finding từ review codebase ngày 2026-10-12. Dùng file này làm danh sách sửa từng case. Đánh dấu `[x]` khi đã xử lý.
 
+Kết quả fix/test ngày 2026-11-01: `CODE_REVIEW_RESULTS.md`.
+
 Phạm vi: `src/content`, `src/utils`, `manifest.json`, và test hiện có. Không gồm thay đổi code trong lần review.
 
 ## Cao
 
 ### 1. `applyHiddenTabsFromStorage` rò interval, ẩn lại tab, và đụng menu của Sheets
 
-- [ ] Chưa xử lý
+- [x] Đã xử lý — xem `CODE_REVIEW_RESULTS.md`
 
 `src/utils/helpers.js` — `applyHiddenTabsFromStorage`. Được gọi từ `src/content/main.js` lúc khởi động và từ `renderTabList` trong `src/content/popup-content.js` mỗi lần mở popup.
 
@@ -29,7 +31,7 @@ Hướng xử lý:
 
 ### 2. Fallback legacy làm các spreadsheet chưa ghi key riêng dùng chung một danh sách
 
-- [ ] Chưa xử lý
+- [x] Đã xử lý — xem `CODE_REVIEW_RESULTS.md`
 
 `src/content/storage.js` — `getScopedTabNames`.
 
@@ -46,7 +48,7 @@ Hướng xử lý:
 
 ### 3. Mở popup trong 3 giây đầu thì toggle nút nổi không bao giờ được gắn
 
-- [ ] Chưa xử lý
+- [x] Đã xử lý — xem `CODE_REVIEW_RESULTS.md`
 
 `src/content/main.js` tạo `#openSheetPopup` sau `CONFIG.INIT_DELAY` (3000ms). `Ctrl+S` hoạt động ngay. `bindPopupHandlers` trong `src/content/popup-ui.js` chỉ chạy một lần sau khi fetch HTML. `bindPopupSettings` trong `src/content/popup-events.js` cần cả `#toggleEagleXBtn` và `#openSheetPopup`. Nếu nút nổi chưa có, nhánh bind bị bỏ và không set `dataset.bound`. Những lần mở sau không gọi lại `bindPopupHandlers`.
 
@@ -61,7 +63,7 @@ Hướng xử lý:
 
 ### 4. Mở lại popup không áp lại quick filter và sort đang chọn
 
-- [ ] Chưa xử lý
+- [x] Đã xử lý — xem `CODE_REVIEW_RESULTS.md`
 
 `populatePopupContent` trong `src/content/popup-content.js` xóa ô tìm kiếm, render lại full danh sách, không dispatch `input`, và không chạy lại `#sortTabs`.
 
@@ -74,7 +76,7 @@ Hướng xử lý:
 
 ### 5. Tìm kiếm phá thứ tự sort, và query chỉ có khoảng trắng ẩn hết danh sách
 
-- [ ] Chưa xử lý
+- [x] Đã xử lý — xem `CODE_REVIEW_RESULTS.md`
 
 `bindSearchHandlers` trong `src/content/popup-events.js` sắp xếp bằng `appendChild` theo điểm, không đọc `#sortTabs`. Xóa query thì mọi điểm bằng 0 nên thứ tự sort cũ không được dựng lại.
 
@@ -90,7 +92,7 @@ Hướng xử lý:
 
 ### 6. Nút All Sheets chỉ gắn một lần và chỉ hai ngôn ngữ
 
-- [ ] Chưa xử lý
+- [x] Đã xử lý — xem `CODE_REVIEW_RESULTS.md`
 
 `attachPopupTriggerToAllSheetsButton` trong `src/content/popup-ui.js`. Selector ở `CONFIG.SELECTORS.ALL_SHEETS_BTN`: `data-tooltip` đúng bằng `All Sheets` hoặc `Tất cả trang tính`.
 
@@ -104,7 +106,7 @@ Hướng xử lý:
 
 ### 7. Ẩn, hiện, và history nhận tab theo tên rồi lấy node đầu tiên
 
-- [ ] Chưa xử lý
+- [x] Đã xử lý — xem `CODE_REVIEW_RESULTS.md`
 
 Click một dòng list trong `renderTabList` dùng đúng node lúc render. Checkbox, Hide Visible, history, và undo trong `src/content/popup-content.js` lại `find` theo `textContent`.
 
@@ -117,7 +119,7 @@ Hướng xử lý:
 
 ### 8. `aria-hidden` bị tính là tab do user ẩn
 
-- [ ] Chưa xử lý
+- [x] Đã xử lý — xem `CODE_REVIEW_RESULTS.md`
 
 `renderTabList` trong `src/content/popup-content.js` và `getActualHiddenCount` trong `src/utils/helpers.js` coi `aria-hidden="true"` là ẩn. Checkbox lại theo storage.
 
@@ -130,7 +132,7 @@ Hướng xử lý:
 
 ### 9. Link publish dùng chung một spreadsheet id
 
-- [ ] Chưa xử lý
+- [x] Đã xử lý — xem `CODE_REVIEW_RESULTS.md`
 
 `getSpreadsheetId` trong `src/utils/helpers.js`. Regex lấy segment ngay sau `/d/`. URL dạng `/spreadsheets/d/e/.../pubhtml` cho id `e`, nên mọi file publish dùng chung `gstf:*:e`.
 
@@ -141,7 +143,7 @@ Hướng xử lý:
 
 ### 10. Shortcut nuốt cả tổ hợp có Shift hoặc Alt
 
-- [ ] Chưa xử lý
+- [x] Đã xử lý — xem `CODE_REVIEW_RESULTS.md`
 
 `src/content/main.js`, listener `keydown`. Điều kiện chỉ kiểm tra Ctrl/Cmd và phím `s`. `Ctrl+Shift+S` và `Ctrl+Alt+S` cũng `preventDefault` và mở popup.
 
@@ -152,7 +154,7 @@ Hướng xử lý:
 
 ### 11. Chuẩn hóa tiếng Việt bỏ sót `đ`
 
-- [ ] Chưa xử lý
+- [x] Đã xử lý — xem `CODE_REVIEW_RESULTS.md`
 
 `normalize` trong `src/utils/helpers.js` chỉ bỏ dấu tổ hợp NFD. `đ` / `Đ` không tách thành `d`, nên tìm `dong` không ra `đông`. README đang mô tả là có chuẩn hóa dấu tiếng Việt.
 
@@ -163,7 +165,7 @@ Hướng xử lý:
 
 ### 12. Click tab đang ẩn không hiện lại tab trước khi kích hoạt
 
-- [ ] Chưa xử lý
+- [x] Đã xử lý — xem `CODE_REVIEW_RESULTS.md`
 
 Dòng list và history trong `src/content/popup-content.js` gọi `simulateClick` khi sheet tab vẫn `display: none`, rồi vẫn ghi history và đóng popup. Nếu Sheets bỏ qua click không trusted hoặc element đang ẩn, popup đóng nhưng không chuyển tab.
 
@@ -176,7 +178,7 @@ Hướng xử lý:
 
 ### 13. Tên tab nằm trong `localStorage` của trang
 
-- [ ] Chưa xử lý
+- [x] Đã xử lý — xem `CODE_REVIEW_RESULTS.md`
 
 `src/content/storage.js` ghi trên `localStorage` của `docs.google.com`. Script cùng origin đọc được tên tab đã ẩn, favorite, và history.
 
@@ -184,7 +186,7 @@ Hướng xử lý: chuyển sang `chrome.storage.local` nếu cần tách dữ l
 
 ### 14. Theme và font scale không được kiểm tra lúc ghi
 
-- [ ] Chưa xử lý
+- [x] Đã xử lý — xem `CODE_REVIEW_RESULTS.md`
 
 `setThemeMode` và `setPopupFontScale` trong `src/content/storage.js` ghi thẳng giá trị. Font chỉ được allowlist lúc đọc (`getPopupFontScale`). Theme không có allowlist.
 
@@ -192,7 +194,7 @@ Hướng xử lý: chỉ ghi `auto | light | dark` và các giá trị trong `CO
 
 ### 15. Nút nổi luôn ghi `Ctrl + S`
 
-- [ ] Chưa xử lý
+- [x] Đã xử lý — xem `CODE_REVIEW_RESULTS.md`
 
 `addPopupButton` trong `src/content/main.js` đặt text `All Tabs (Ctrl + S)` cả trên macOS, nơi shortcut là Cmd.
 
@@ -200,7 +202,7 @@ Hướng xử lý: chọn nhãn theo `navigator.platform` hoặc theo phím modi
 
 ### 16. Version manifest lệch changelog
 
-- [ ] Chưa xử lý
+- [x] Đã xử lý — xem `CODE_REVIEW_RESULTS.md`
 
 `manifest.json` ghi `3.3`. `CHANGELOG.md` mới nhất là `3.3.2`.
 
@@ -208,7 +210,7 @@ Hướng xử lý: đồng bộ version khi phát hành bản sửa các mục t
 
 ### 17. JSDoc đặt sai chỗ
 
-- [ ] Chưa xử lý
+- [x] Đã xử lý — xem `CODE_REVIEW_RESULTS.md`
 
 `src/utils/helpers.js`: block mô tả `normalize` nằm ngay trên `getSpreadsheetId`.
 
@@ -216,17 +218,16 @@ Hướng xử lý: chuyển JSDoc xuống đúng hàm.
 
 ## Test còn thiếu
 
-`tests/high-severity.test.js` phủ parsing id cơ bản, scope sau khi đã ghi, và JSON hỏng. `tests/snowfall-colors.test.js` chỉ khóa màu tuyết trong CSS. Chưa có test cho:
+`tests/high-severity.test.js` và `tests/review-fixes.test.js` phủ các case dưới đây.
 
-- [ ] Fallback legacy không làm file khác bị ẩn theo
-- [ ] `scoreMatch`: chuỗi rỗng, khoảng trắng, `đ`, thứ tự điểm
-- [ ] Quick filter và sort khi mở lại popup
-- [ ] `applyHiddenTabsFromStorage`: dừng interval, không ẩn lại tab vừa bỏ ẩn, không đụng `.goog-menu`
-- [ ] Toggle nút nổi khi `#openSheetPopup` chưa tồn tại lúc bind
-- [ ] Shortcut không bắt `Ctrl+Shift+S` / `Ctrl+Alt+S`
+- [x] Fallback legacy không làm file khác bị ẩn theo
+- [x] `scoreMatch`: chuỗi rỗng, khoảng trắng, `đ`, thứ tự điểm
+- [x] Quick filter và sort khi mở lại popup
+- [x] `applyHiddenTabsFromStorage`: dừng interval, không ẩn lại tab vừa bỏ ẩn, không đụng `.goog-menu`
+- [x] Toggle nút nổi khi `#openSheetPopup` chưa tồn tại lúc bind
+- [x] Shortcut không bắt `Ctrl+Shift+S` / `Ctrl+Alt+S`
 
 ## Đã ổn, không cần sửa trong backlog này
 
 - Tên tab render bằng `textContent`, không nhét vào `innerHTML`
-- Lớp tuyết có `pointer-events: none` và tôn trọng `prefers-reduced-motion`
 - Font scale có allowlist lúc đọc

@@ -1,6 +1,8 @@
 // Popup shell: create element, toggle visibility, theme/font
 
 let popupSelectedIndex = 0;
+let allSheetsObserver = null;
+let allSheetsObserveTimer = null;
 
 function applyPopupTheme(popup, mode = getThemeMode()) {
   if (!popup) return;
@@ -26,8 +28,28 @@ function applyPopupFontScale(popup, scale = getPopupFontScale()) {
   }
 }
 
+function getExtensionVersion() {
+  try {
+    return chrome?.runtime?.getManifest?.().version || "";
+  } catch (error) {
+    return "";
+  }
+}
+
+function applyPopupVersion(popup, version = getExtensionVersion()) {
+  const versionEl = popup?.querySelector("#popupVersion");
+  if (!versionEl || !version) return false;
+  versionEl.textContent = `v${version}`;
+  versionEl.hidden = false;
+  versionEl.setAttribute("title", `Search Tabs ${version}`);
+  return true;
+}
+
 function hidePopup(popup) {
   if (popup) popup.style.display = "none";
+  if (typeof stopApplyingHiddenTabs === "function") {
+    stopApplyingHiddenTabs();
+  }
 }
 
 function showPopup(popup) {
@@ -46,32 +68,6 @@ function createSheetTabPopup() {
   return popup;
 }
 
-const SNOWFLAKE_COUNT = 36;
-const SNOWFLAKE_GLYPHS = ["❄", "❅", "❆", "•"];
-
-function initPopupSnowfall(popup) {
-  const layer = popup?.querySelector("#snowfall");
-  if (!layer || layer.dataset.ready === "true") return;
-  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-
-  const fragment = document.createDocumentFragment();
-  for (let i = 0; i < SNOWFLAKE_COUNT; i += 1) {
-    const flake = document.createElement("span");
-    flake.className = "snowflake";
-    flake.textContent = SNOWFLAKE_GLYPHS[i % SNOWFLAKE_GLYPHS.length];
-    flake.style.setProperty("--snow-left", `${Math.random() * 100}%`);
-    flake.style.setProperty("--snow-duration", `${8 + Math.random() * 10}s`);
-    flake.style.setProperty("--snow-delay", `${-Math.random() * 14}s`);
-    flake.style.setProperty("--snow-size", `${0.55 + Math.random() * 0.95}em`);
-    flake.style.setProperty("--snow-drift", `${-36 + Math.random() * 72}px`);
-    flake.style.setProperty("--snow-opacity", `${0.4 + Math.random() * 0.45}`);
-    fragment.appendChild(flake);
-  }
-
-  layer.appendChild(fragment);
-  layer.dataset.ready = "true";
-}
-
 function loadPopupHtml(popup) {
   return fetch(chrome.runtime.getURL("src/content/popup.html"))
     .then((response) => response.text())
@@ -81,7 +77,7 @@ function loadPopupHtml(popup) {
       popup.dataset.quickFilter = popup.dataset.quickFilter || "all";
       applyPopupTheme(popup);
       applyPopupFontScale(popup);
-      initPopupSnowfall(popup);
+      applyPopupVersion(popup);
       bindPopupHandlers(popup);
       populatePopupContent(popup);
     });
@@ -117,27 +113,68 @@ function toggleSheetTabsPopup() {
 
   applyPopupTheme(popup);
   applyPopupFontScale(popup);
+  bindFloatingButtonToggle(popup);
   populatePopupContent(popup);
 }
 
-function attachPopupTriggerToAllSheetsButton() {
-  const observer = new MutationObserver(() => {
-    const allSheetsBtn = document.querySelector(CONFIG.SELECTORS.ALL_SHEETS_BTN);
-
-    if (allSheetsBtn && !allSheetsBtn.dataset.popupBound) {
-      allSheetsBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        e.preventDefault();
-        toggleSheetTabsPopup();
-      });
-
-      allSheetsBtn.dataset.popupBound = "true";
-      observer.disconnect();
-    }
+function bindAllSheetsButton(btn) {
+  if (!btn || btn.dataset.popupBound === "true") return false;
+  btn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    toggleSheetTabsPopup();
   });
+  btn.dataset.popupBound = "true";
+  return true;
+}
 
-  observer.observe(document.body, {
+function stopAllSheetsObserver() {
+  allSheetsObserver?.disconnect();
+  allSheetsObserver = null;
+  if (allSheetsObserveTimer != null) {
+    clearTimeout(allSheetsObserveTimer);
+    allSheetsObserveTimer = null;
+  }
+}
+
+function attachPopupTriggerToAllSheetsButton() {
+  if (typeof document === "undefined" || !document.body) return;
+
+  const tryBind = () => {
+    document.querySelectorAll(".docs-sheet-menu-button").forEach((btn) => {
+      if (isAllSheetsButton(btn)) {
+        bindAllSheetsButton(btn);
+      }
+    });
+  };
+
+  stopAllSheetsObserver();
+  tryBind();
+
+  allSheetsObserver = new MutationObserver(tryBind);
+  allSheetsObserver.observe(document.body, {
     childList: true,
     subtree: true,
   });
+
+  allSheetsObserveTimer = setTimeout(() => {
+    stopAllSheetsObserver();
+  }, CONFIG.ALL_SHEETS_OBSERVE_MS);
+}
+
+if (typeof module !== "undefined" && module.exports) {
+  module.exports = {
+    applyPopupTheme,
+    applyPopupFontScale,
+    getExtensionVersion,
+    applyPopupVersion,
+    hidePopup,
+    showPopup,
+    getSheetTabPopup,
+    createSheetTabPopup,
+    toggleSheetTabsPopup,
+    bindAllSheetsButton,
+    stopAllSheetsObserver,
+    attachPopupTriggerToAllSheetsButton
+  };
 }

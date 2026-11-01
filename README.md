@@ -30,7 +30,6 @@ A Chrome extension that helps you find, organize, and jump between Google Sheets
 - Recent history list (up to 10 items).
 
 ### UI Customization
-- Decorative snowfall overlay on the popup (disabled when `prefers-reduced-motion` is set).
 - Theme modes: `Auto`, `Light`, `Dark`.
 - Font size presets:
   - Small (90%)
@@ -93,10 +92,10 @@ Google Sheets Tab Finder/
 
 ## Storage Keys
 
-The extension uses `localStorage`:
-- `gstf:hiddenTabs:{spreadsheetId}`: hidden tab names for one spreadsheet (falls back to legacy `hiddenTabs`).
-- `gstf:historyTabs:{spreadsheetId}`: recent tab names for one spreadsheet, max 10 (falls back to legacy `historyTabs`).
-- `gstf:favoriteTabs:{spreadsheetId}`: favorited tab names for one spreadsheet (falls back to legacy `favoriteTabs`).
+The extension prefers `chrome.storage.local` and migrates leftover page `localStorage` keys once:
+- `gstf:hiddenTabs:{spreadsheetId}`: hidden tab names for one spreadsheet. Unscoped `hiddenTabs` migrates to the first spreadsheet that reads it, then is removed.
+- `gstf:historyTabs:{spreadsheetId}`: recent tab names for one spreadsheet, max 10.
+- `gstf:favoriteTabs:{spreadsheetId}`: favorited tab names for one spreadsheet.
 - `eaglexBtnVisible`: floating button visibility.
 - `popupThemeMode`: `auto | light | dark`.
 - `popupFontScale`: `0.9 | 1 | 1.1 | 1.2 | 1.3`.
@@ -105,6 +104,8 @@ The extension uses `localStorage`:
 
 - Host permission: `https://docs.google.com/spreadsheets/*`
   - Required to run content scripts inside Google Sheets.
+- `storage`
+  - Required to keep hide/favorite/history/prefs in `chrome.storage.local` instead of page `localStorage`.
 
 ## Browser Support
 

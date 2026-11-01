@@ -5,6 +5,31 @@ All notable changes to the Google Sheets Tab Finder extension will be documented
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.4.0] - 2026-11-01
+
+### Fixed
+- Hidden-tab apply no longer leaks intervals, re-hides a tab the user just showed, or hides Sheets `.goog-menu`
+- Legacy `hiddenTabs` / `historyTabs` / `favoriteTabs` migrate once to the first spreadsheet and are then removed
+- Floating-button toggle binds even if the popup opens before the button exists
+- Reopening the popup reapplies the active quick filter and sort
+- Blank or whitespace search no longer hides every tab; empty query keeps the selected sort
+- All Sheets hook matches more locales, rebinds if Sheets recreates the button, and stops observing after 60s
+- Hide/show/history target the matching sheet tab by index when possible
+- Stats ignore Sheets-owned `aria-hidden`
+- Published `/spreadsheets/d/e/{id}` URLs no longer share storage id `e`
+- `Ctrl+Shift+S` and `Ctrl+Alt+S` no longer open the popup
+- Vietnamese search maps `đ`/`Đ` to `d`
+- Clicking a hidden tab unhides it before activating
+- Theme and font scale are validated on write
+- Floating button label uses `Cmd + S` on macOS
+
+### Changed
+- Tab names and UI prefs now prefer `chrome.storage.local`, with a one-time migrate off page `localStorage`
+- Popup footer shows the extension version from the manifest
+
+### Removed
+- Decorative snowfall overlay on the popup
+
 ## [3.3.3] - 2026-10-27
 
 ### Changed

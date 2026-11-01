@@ -1,30 +1,64 @@
 // Extension entry point: floating button, shortcuts, init
 
 function addPopupButton() {
-  if (document.getElementById("openSheetPopup")) return;
+  if (typeof document === "undefined" || !document.body) return null;
+  const existing = document.getElementById("openSheetPopup");
+  if (existing) {
+    existing.textContent = `All Tabs (${getOpenPopupShortcutLabel()})`;
+    return existing;
+  }
 
   const button = document.createElement("button");
   button.id = "openSheetPopup";
-  button.textContent = "All Tabs (Ctrl + S)";
+  button.textContent = `All Tabs (${getOpenPopupShortcutLabel()})`;
   button.style.display = isButtonVisible() ? "block" : "none";
   button.addEventListener("click", toggleSheetTabsPopup);
   document.body.appendChild(button);
+  return button;
 }
 
-document.addEventListener("keydown", (event) => {
-  if (
-    (event.ctrlKey || event.metaKey) &&
-    event.key.toLowerCase() === CONFIG.SHORTCUTS.OPEN_POPUP
-  ) {
-    event.preventDefault();
-    toggleSheetTabsPopup();
+function onOpenPopupShortcut(event) {
+  if (!shouldOpenPopupShortcut(event)) return false;
+  event.preventDefault();
+  toggleSheetTabsPopup();
+  return true;
+}
+
+document.addEventListener("keydown", onOpenPopupShortcut);
+
+function bootExtensionUi() {
+  addPopupButton();
+}
+
+function bootExtensionAfterSheetsReady() {
+  addPopupButton();
+  applyHiddenTabsFromStorage();
+  attachPopupTriggerToAllSheetsButton();
+}
+
+if (typeof hydrateExtensionStorage === "function") {
+  hydrateExtensionStorage().then(bootExtensionUi).catch(bootExtensionUi);
+} else {
+  bootExtensionUi();
+}
+
+if (typeof document !== "undefined") {
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", bootExtensionUi, { once: true });
+  } else {
+    bootExtensionUi();
   }
-});
+}
 
 window.addEventListener("load", () => {
-  setTimeout(() => {
-    addPopupButton();
-    applyHiddenTabsFromStorage();
-    attachPopupTriggerToAllSheetsButton();
-  }, CONFIG.INIT_DELAY);
+  setTimeout(bootExtensionAfterSheetsReady, CONFIG.INIT_DELAY);
 });
+
+if (typeof module !== "undefined" && module.exports) {
+  module.exports = {
+    addPopupButton,
+    onOpenPopupShortcut,
+    bootExtensionUi,
+    bootExtensionAfterSheetsReady
+  };
+}

@@ -14,6 +14,8 @@ const CONFIG = {
 
     FONT_SCALE_OPTIONS: ['0.9', '1', '1.1', '1.2', '1.3'],
 
+    THEME_MODES: ['auto', 'light', 'dark'],
+
     // History settings
     MAX_HISTORY_ITEMS: 10,
 
@@ -21,6 +23,8 @@ const CONFIG = {
     RETRY_INTERVAL: 300,
     INIT_DELAY: 3000,
     STATS_UPDATE_DEBOUNCE: 200,
+    MAX_HIDDEN_APPLY_ATTEMPTS: 40,
+    ALL_SHEETS_OBSERVE_MS: 60000,
 
     // Z-Index layers
     Z_INDEX: {
@@ -35,9 +39,23 @@ const CONFIG = {
         TAB_NAME: '.docs-sheet-tab-name',
         TAB_COLOR: '.docs-sheet-tab-color',
         ACTIVE_TAB: '.docs-sheet-active-tab',
-        ALL_SHEETS_BTN: '.docs-sheet-menu-button[data-tooltip="Tất cả trang tính"], .docs-sheet-menu-button[data-tooltip="All Sheets"]',
+        SHEET_BUTTON_BAR: '.docs-sheet-button-bar',
+        ALL_SHEETS_BTN: '.docs-sheet-button-bar .docs-sheet-menu-button, .docs-sheet-menu-button',
         CONTEXT_MENU: '.goog-menu'
     },
+
+    ALL_SHEETS_TOOLTIP_MARKERS: [
+        'all sheets',
+        'tất cả trang tính',
+        'todas las hojas',
+        'toutes les feuilles',
+        'alle tabellen',
+        'todas as planilhas',
+        'tutti i fogli',
+        'すべてのシート',
+        '모든 시트',
+        '所有工作表'
+    ],
 
     // Keyboard shortcuts
     SHORTCUTS: {
