@@ -17,8 +17,6 @@ function findListItemByTabName(tabName) {
 function updateListItemHiddenState(li, isHidden) {
   if (!li) return;
   li.dataset.isHidden = isHidden ? "true" : "false";
-  const cb = li.querySelector(".tabCheckbox");
-  if (cb) cb.checked = isHidden;
   const st = li.querySelector("strong");
   if (st) {
     st.style.color = isHidden ? "var(--ui-text-muted)" : "var(--ui-text)";
@@ -151,13 +149,17 @@ function ensureBulkActions(popup, searchInput) {
   let undoTimer = null;
 
   const updateStats = () => {
-    const totalTabs = getSheetTabs().length;
-    const hiddenCount = getActualHiddenCount();
+    const { totalTabs, hiddenCount, visibleCount } =
+      typeof getHiddenTabStats === "function"
+        ? getHiddenTabStats()
+        : {
+            totalTabs: getSheetTabs().length,
+            hiddenCount: getActualHiddenCount(),
+            visibleCount: getSheetTabs().length - getActualHiddenCount()
+          };
     const statsEl = popup.querySelector("#tabStats");
     if (statsEl) {
-      statsEl.textContent = `Total: ${totalTabs} | Hidden: ${hiddenCount} | Visible: ${
-        totalTabs - hiddenCount
-      }`;
+      statsEl.textContent = `Total: ${totalTabs} | Hidden: ${hiddenCount} | Visible: ${visibleCount}`;
     }
   };
 
@@ -187,6 +189,13 @@ function ensureBulkActions(popup, searchInput) {
     clearTimeout(undoTimer);
   });
 
+  const setQuickFilter = (filter) => {
+    popup.dataset.quickFilter = filter;
+    popup.querySelectorAll(".quick-filter-btn").forEach((btn) => {
+      btn.classList.toggle("active", (btn.dataset.filter || "all") === filter);
+    });
+  };
+
   hideAllBtn.addEventListener("click", () => {
     const previousHiddenTabs = getHiddenTabs();
     const activeName = getActiveTabName();
@@ -200,22 +209,26 @@ function ensureBulkActions(popup, searchInput) {
 
     visibleLis.forEach((li) => {
       const name = getListItemName(li);
-      const tab = getSheetTabByIndex(li.dataset.tabIndex) || findSheetTabByName(name);
       if (!name) return;
 
       if (name === activeName) {
-        if (tab) tab.style.display = "";
         updateListItemHiddenState(li, false);
         return;
       }
 
       currentHidden.add(name);
-      if (tab) tab.style.display = "none";
       updateListItemHiddenState(li, true);
     });
 
     setHiddenTabs([...currentHidden]);
+    applyHiddenTabsNow();
     showUndo("Hidden visible tabs.", previousHiddenTabs);
+
+    // Keep the list readable after bulk hide (Visible filter would go empty).
+    if ((popup.dataset.quickFilter || "all") === "visible") {
+      setQuickFilter("all");
+    }
+
     refreshTabListView(popup);
     updateStats();
   });
@@ -224,15 +237,25 @@ function ensureBulkActions(popup, searchInput) {
     const previousHiddenTabs = getHiddenTabs();
     setHiddenTabs([]);
 
-    getSheetTabs().forEach((tab) => {
-      tab.style.display = "";
-    });
-
     document.querySelectorAll("#tabList li").forEach((li) => {
       updateListItemHiddenState(li, false);
     });
 
+    if (typeof showAllExtensionHiddenSheetTabs === "function") {
+      showAllExtensionHiddenSheetTabs();
+    } else {
+      getSheetTabs().forEach((tab) => {
+        tab.style.display = "";
+      });
+    }
+
     showUndo("Shown all hidden tabs.", previousHiddenTabs);
+
+    // Hidden filter would show an empty list after everything is unhidden.
+    if ((popup.dataset.quickFilter || "all") === "hidden") {
+      setQuickFilter("all");
+    }
+
     refreshTabListView(popup);
     updateStats();
   });
@@ -251,106 +274,135 @@ function ensureBulkActions(popup, searchInput) {
   return updateStats;
 }
 
+function appendTabListItem(popup, tabList, updateStats, options) {
+  const {
+    tab = null,
+    tabText,
+    index,
+    isHidden = false,
+    isActive = false,
+    color = "black",
+    isFavorite = false,
+    missingFromBar = false
+  } = options;
+
+  const li = document.createElement("li");
+  const textColor = isHidden ? "var(--ui-text-muted)" : "var(--ui-text)";
+  const isDuplicate = !missingFromBar && isDuplicateTabName(tabText);
+
+  if (isDuplicate) {
+    li.style.borderLeft = "3px solid #ff9800";
+    li.title = `${tabText} ⚠️ Duplicate name detected`;
+  } else if (missingFromBar) {
+    li.title = `${tabText} (hidden — not in tab bar)`;
+  } else {
+    li.title = tabText;
+  }
+
+  const favoriteBtn = document.createElement("button");
+  favoriteBtn.className = isFavorite ? "favorite-btn is-favorite" : "favorite-btn";
+  favoriteBtn.title = "Toggle favorite";
+  favoriteBtn.setAttribute("aria-label", "Toggle favorite");
+  favoriteBtn.textContent = "★";
+
+  const colorDot = document.createElement("span");
+  colorDot.className = "tab-color-dot";
+  colorDot.textContent = "●";
+  colorDot.style.color = color;
+
+  const nameEl = document.createElement("strong");
+  nameEl.className = "tab-name";
+  nameEl.textContent = tabText;
+  nameEl.style.color = textColor;
+
+  li.append(favoriteBtn, colorDot, nameEl);
+  li.classList.add("tab-item");
+  li.dataset.isHidden = isHidden ? "true" : "false";
+  li.dataset.isFavorite = isFavorite ? "true" : "false";
+  li.dataset.tabName = tabText;
+  li.dataset.tabIndex = String(index);
+  li.dataset.tabColor = color;
+  if (missingFromBar) li.dataset.missingFromBar = "true";
+
+  li.addEventListener("click", (e) => {
+    if (e.target.classList.contains("favorite-btn")) {
+      return;
+    }
+
+    const elTab = tab || findSheetTabByName(tabText);
+    if (elTab) {
+      activateSheetTab(elTab, tabText, popup);
+      return;
+    }
+
+    // Storage-only row: clear hide state; Sheets may need All Sheets to restore the node.
+    showTab(tabText);
+    updateListItemHiddenState(li, false);
+    refreshTabListView(popup);
+    updateStats?.();
+  });
+
+  favoriteBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const favorite = toggleFavoriteTab(tabText);
+    li.dataset.isFavorite = favorite ? "true" : "false";
+    favoriteBtn.classList.toggle("is-favorite", favorite);
+    refreshTabListView(popup);
+  });
+
+  if (isActive) {
+    li.classList.add("active-tab-item");
+    li.style.fontWeight = "bold";
+  }
+
+  tabList.appendChild(li);
+  return li;
+}
+
 function renderTabList(popup, tabList, searchInput, updateStats) {
-  const hiddenTabs = getHiddenTabs();
+  const hiddenTabs = typeof reconcileHiddenTabsWithDom === "function"
+    ? reconcileHiddenTabsWithDom()
+    : getHiddenTabs();
+  const hiddenSet = new Set(hiddenTabs);
   const favoriteTabs = new Set(getFavoriteTabs());
   applyHiddenTabsFromStorage();
 
+  const renderedNames = new Set();
+
   getSheetTabs().forEach((tab, index) => {
-    const li = document.createElement("li");
     const tabName = tab.querySelector(CONFIG.SELECTORS.TAB_NAME);
     const colorIndicator = tab.querySelector(CONFIG.SELECTORS.TAB_COLOR);
     const tabText = tabName?.textContent.trim() || "";
-    const isChecked = hiddenTabs.includes(tabText);
-    const isActive = tab.classList.contains("docs-sheet-active-tab");
+    if (!tabText) return;
 
+    renderedNames.add(tabText);
     let color = "black";
-    const textColor = isChecked ? "var(--ui-text-muted)" : "var(--ui-text)";
-
     if (colorIndicator) {
       color = window.getComputedStyle(colorIndicator).backgroundColor;
     }
 
-    const isFavorite = favoriteTabs.has(tabText);
-    const isDuplicate = isDuplicateTabName(tabText);
-
-    if (isDuplicate) {
-      li.style.borderLeft = "3px solid #ff9800";
-      li.title = `${tabText} ⚠️ Duplicate name detected`;
-    } else {
-      li.title = tabText;
-    }
-
-    const checkbox = document.createElement("input");
-    checkbox.type = "checkbox";
-    checkbox.className = "tabCheckbox";
-    checkbox.checked = isChecked;
-
-    const favoriteBtn = document.createElement("button");
-    favoriteBtn.className = isFavorite ? "favorite-btn is-favorite" : "favorite-btn";
-    favoriteBtn.title = "Toggle favorite";
-    favoriteBtn.setAttribute("aria-label", "Toggle favorite");
-    favoriteBtn.textContent = "★";
-
-    const colorDot = document.createElement("span");
-    colorDot.className = "tab-color-dot";
-    colorDot.textContent = "●";
-    colorDot.style.color = color;
-
-    const nameEl = document.createElement("strong");
-    nameEl.className = "tab-name";
-    nameEl.textContent = tabText;
-    nameEl.style.color = textColor;
-
-    li.append(checkbox, favoriteBtn, colorDot, nameEl);
-    li.classList.add("tab-item");
-    li.dataset.isHidden = isChecked ? "true" : "false";
-    li.dataset.isFavorite = isFavorite ? "true" : "false";
-    li.dataset.tabName = tabText;
-    li.dataset.tabIndex = String(index);
-    li.dataset.tabColor = color;
-
-    li.addEventListener("click", (e) => {
-      if (
-        e.target.classList.contains("tabCheckbox") ||
-        e.target.classList.contains("favorite-btn")
-      ) {
-        return;
-      }
-
-      activateSheetTab(tab, tabText, popup);
+    appendTabListItem(popup, tabList, updateStats, {
+      tab,
+      tabText,
+      index,
+      isHidden: hiddenSet.has(tabText) || isExtensionHiddenTabElement(tab),
+      isActive: tab.classList.contains("docs-sheet-active-tab"),
+      color,
+      isFavorite: favoriteTabs.has(tabText)
     });
+  });
 
-    favoriteBtn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      const favorite = toggleFavoriteTab(tabText);
-      li.dataset.isFavorite = favorite ? "true" : "false";
-      favoriteBtn.classList.toggle("is-favorite", favorite);
-      refreshTabListView(popup);
+  // Tabs still in storage but removed from the bar must appear for Hidden filter/stats.
+  hiddenTabs.forEach((tabText) => {
+    if (!tabText || renderedNames.has(tabText)) return;
+    appendTabListItem(popup, tabList, updateStats, {
+      tabText,
+      index: renderedNames.size,
+      isHidden: true,
+      isFavorite: favoriteTabs.has(tabText),
+      missingFromBar: true
     });
-
-    checkbox.addEventListener("change", (e) => {
-      e.stopPropagation();
-      const checked = e.target.checked;
-
-      if (checked) {
-        hideTab(tabText);
-      } else {
-        showTab(tabText);
-      }
-
-      tab.style.display = checked ? "none" : "";
-      updateListItemHiddenState(li, checked);
-      refreshTabListView(popup);
-      updateStats();
-    });
-
-    if (isActive) {
-      li.classList.add("active-tab-item");
-      li.style.fontWeight = "bold";
-    }
-
-    tabList.appendChild(li);
+    renderedNames.add(tabText);
   });
 }
 
@@ -379,6 +431,7 @@ function populatePopupContent(popup) {
     showPopup(popup);
     searchInput.value = "";
     refreshTabListView(popup);
+    updateStats();
     searchInput.focus();
   }, 0);
 }
@@ -393,6 +446,7 @@ if (typeof module !== "undefined" && module.exports) {
     sortTabItems,
     bindSortHandler,
     ensureBulkActions,
+    appendTabListItem,
     renderTabList,
     populatePopupContent
   };

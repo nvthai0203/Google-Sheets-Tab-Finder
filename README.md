@@ -1,6 +1,6 @@
 # Search Tabs - Google Sheets
 
-Chrome extension (Manifest V3, **v3.4.1**) that helps you find, organize, and jump between Google Sheets tabs quickly — with search, filters, favorites, and a customizable UI.
+Chrome extension (Manifest V3, **v3.4.5**) that helps you find, organize, and jump between Google Sheets tabs quickly — with search, filters, favorites, and a customizable UI.
 
 See [CHANGELOG.md](CHANGELOG.md) for release history.
 
@@ -14,7 +14,6 @@ See [CHANGELOG.md](CHANGELOG.md) for release history.
 - Clicking a hidden tab unhides it, then activates it.
 
 ### Tab Management
-- Hide/show individual tabs with checkbox.
 - Bulk actions: `Hide Visible`, `Show Hidden`.
 - Undo bar for bulk actions (restore previous hidden state).
 - Real-time stats: total, hidden, visible.

@@ -97,6 +97,9 @@ function hydrateExtensionStorage() {
             Object.entries(items || {}).forEach(([key, value]) => {
                 if (typeof value === "string") {
                     extensionStorageCache.set(key, value);
+                } else if (Array.isArray(value)) {
+                    // Older builds may have stored arrays directly.
+                    extensionStorageCache.set(key, JSON.stringify(value));
                 }
             });
             migratePageLocalStorage();

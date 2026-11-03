@@ -37,7 +37,15 @@ function bootExtensionAfterSheetsReady() {
 }
 
 if (typeof hydrateExtensionStorage === "function") {
-  hydrateExtensionStorage().then(bootExtensionUi).catch(bootExtensionUi);
+  hydrateExtensionStorage()
+    .then(() => {
+      bootExtensionUi();
+      // Re-apply after cache is ready so early empty reads cannot skip hides.
+      if (typeof applyHiddenTabsFromStorage === "function") {
+        applyHiddenTabsFromStorage();
+      }
+    })
+    .catch(bootExtensionUi);
 } else {
   bootExtensionUi();
 }

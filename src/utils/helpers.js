@@ -68,20 +68,80 @@ function getSheetTabName(tab) {
 }
 
 /**
- * Count tabs hidden by this extension (storage or display we set).
+ * Whether this extension has set a sheet tab to display:none.
+ * Ignores Sheets-owned aria-hidden.
+ * @param {HTMLElement} tab
+ * @returns {boolean}
+ */
+function isExtensionHiddenTabElement(tab) {
+    return Boolean(tab) && tab.style.display === "none";
+}
+
+/**
+ * Stats for extension-hidden tabs.
+ * Storage is the source of truth — Sheets may remove display:none tabs from the
+ * tab bar, so counting only current DOM nodes under-reports Hidden and breaks
+ * the Hidden filter when those rows are missing from the list.
+ * @returns {{ totalTabs: number, hiddenCount: number, visibleCount: number, hiddenNames: string[] }}
+ */
+function getHiddenTabStats() {
+    const fromStorage = typeof getHiddenTabs === "function" ? getHiddenTabs() : [];
+    const hiddenSet = new Set(fromStorage);
+    const tabs = getSheetTabs();
+    const domNames = new Set();
+
+    tabs.forEach((tab) => {
+        const name = getSheetTabName(tab);
+        if (!name) return;
+        domNames.add(name);
+        // Recover tabs still visually hidden if storage was briefly empty.
+        if (isExtensionHiddenTabElement(tab)) {
+            hiddenSet.add(name);
+        }
+    });
+
+    const hiddenNames = [...hiddenSet];
+    const storageOnly = hiddenNames.filter((name) => !domNames.has(name)).length;
+    const hiddenCount = hiddenNames.length;
+    const totalTabs = tabs.length + storageOnly;
+    const visibleCount = Math.max(0, totalTabs - hiddenCount);
+
+    return {
+        totalTabs,
+        hiddenCount,
+        visibleCount,
+        hiddenNames
+    };
+}
+
+/**
+ * Count tabs hidden by this extension (storage + inline display we set).
  * Ignores Sheets-owned aria-hidden.
  * @returns {number} Number of hidden tabs
  */
 function getActualHiddenCount() {
-    const hiddenNames = new Set(typeof getHiddenTabs === "function" ? getHiddenTabs() : []);
-    let hidden = 0;
-    getSheetTabs().forEach((tab) => {
-        const name = getSheetTabName(tab);
-        if ((name && hiddenNames.has(name)) || tab.style.display === "none") {
-            hidden += 1;
-        }
-    });
-    return hidden;
+    return getHiddenTabStats().hiddenCount;
+}
+
+/**
+ * If sheet tabs still have inline display:none but are missing from storage,
+ * write them back so stats/filter match what the user sees in the tab bar.
+ * @returns {string[]} Current hidden tab names after repair
+ */
+function reconcileHiddenTabsWithDom() {
+    if (typeof getHiddenTabs !== "function" || typeof setHiddenTabs !== "function") {
+        return [];
+    }
+
+    const { hiddenNames } = getHiddenTabStats();
+    const fromStorage = getHiddenTabs();
+    const same =
+        fromStorage.length === hiddenNames.length &&
+        fromStorage.every((name) => hiddenNames.includes(name));
+    if (!same) {
+        setHiddenTabs(hiddenNames);
+    }
+    return hiddenNames;
 }
 
 /**
@@ -151,6 +211,7 @@ function activateSheetTab(tab, tabName, popup) {
 
 let hiddenTabsApplyTimer = null;
 let hiddenTabsApplyAttempts = 0;
+let hiddenTabsObserver = null;
 
 function stopApplyingHiddenTabs() {
     if (hiddenTabsApplyTimer != null) {
@@ -160,43 +221,90 @@ function stopApplyingHiddenTabs() {
     hiddenTabsApplyAttempts = 0;
 }
 
+function stopWatchingSheetTabsForHiddenState() {
+    if (hiddenTabsObserver) {
+        hiddenTabsObserver.disconnect();
+        hiddenTabsObserver = null;
+    }
+}
+
 function getHiddenTabsApplyState() {
     return {
         timerActive: hiddenTabsApplyTimer != null,
-        attempts: hiddenTabsApplyAttempts
+        attempts: hiddenTabsApplyAttempts,
+        watching: hiddenTabsObserver != null
     };
 }
 
+/**
+ * Hide sheet tabs whose names are in storage.
+ * Does not force-show other tabs — a temporary empty storage read (e.g. before
+ * chrome.storage hydrate) must not wipe display:none the user already applied.
+ * Explicit show paths (Show Hidden, activate) clear display themselves.
+ */
 function applyHiddenTabsNow() {
     const tabs = getSheetTabs();
     if (tabs.length === 0) return false;
 
     const hiddenTabs = typeof getHiddenTabs === "function" ? getHiddenTabs() : [];
+    const hiddenSet = new Set(hiddenTabs);
     tabs.forEach((tab) => {
         const name = getSheetTabName(tab);
-        if (name && hiddenTabs.includes(name)) {
+        if (name && hiddenSet.has(name)) {
             tab.style.display = "none";
         }
     });
     return true;
 }
 
+/**
+ * Clear inline display:none on every sheet tab (used by Show Hidden).
+ */
+function showAllExtensionHiddenSheetTabs() {
+    getSheetTabs().forEach((tab) => {
+        tab.style.display = "";
+    });
+}
+
+function startWatchingSheetTabsForHiddenState() {
+    if (typeof MutationObserver !== "function") return false;
+
+    const container = getTabsContainer();
+    if (!container) return false;
+
+    stopWatchingSheetTabsForHiddenState();
+    hiddenTabsObserver = new MutationObserver(() => {
+        applyHiddenTabsNow();
+    });
+    hiddenTabsObserver.observe(container, { childList: true });
+    return true;
+}
+
 function applyHiddenTabsFromStorage() {
     stopApplyingHiddenTabs();
 
-    if (applyHiddenTabsNow()) return;
+    if (applyHiddenTabsNow()) {
+        startWatchingSheetTabsForHiddenState();
+        return;
+    }
 
     hiddenTabsApplyTimer = setInterval(() => {
         hiddenTabsApplyAttempts += 1;
         const maxAttempts = CONFIG.MAX_HIDDEN_APPLY_ATTEMPTS || 40;
         if (applyHiddenTabsNow() || hiddenTabsApplyAttempts >= maxAttempts) {
             stopApplyingHiddenTabs();
+            if (getSheetTabs().length > 0) {
+                startWatchingSheetTabsForHiddenState();
+            }
         }
     }, CONFIG.RETRY_INTERVAL);
 }
 
 if (typeof window !== "undefined" && typeof window.addEventListener === "function") {
-    window.addEventListener("pagehide", stopApplyingHiddenTabs);
+    window.addEventListener("pagehide", () => {
+        stopApplyingHiddenTabs();
+        stopWatchingSheetTabsForHiddenState();
+    });
 }
 
 function isAllSheetsButton(el) {
@@ -236,7 +344,10 @@ if (typeof module !== "undefined" && module.exports) {
         getSheetTabs,
         getSheetTabByIndex,
         getSheetTabName,
+        isExtensionHiddenTabElement,
+        getHiddenTabStats,
         getActualHiddenCount,
+        reconcileHiddenTabsWithDom,
         simulateClick,
         getAllTabNames,
         isDuplicateTabName,
@@ -244,8 +355,11 @@ if (typeof module !== "undefined" && module.exports) {
         findSheetTabByName,
         activateSheetTab,
         stopApplyingHiddenTabs,
+        stopWatchingSheetTabsForHiddenState,
         getHiddenTabsApplyState,
         applyHiddenTabsNow,
+        showAllExtensionHiddenSheetTabs,
+        startWatchingSheetTabsForHiddenState,
         applyHiddenTabsFromStorage,
         isAllSheetsButton,
         shouldOpenPopupShortcut,

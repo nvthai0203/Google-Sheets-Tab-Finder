@@ -858,15 +858,6 @@ html {
     box-shadow: none;
 }
 
-.tabCheckbox {
-    width: 16px;
-    height: 16px;
-    margin-right: 0;
-    cursor: pointer;
-    accent-color: #2563eb;
-    flex-shrink: 0;
-}
-
 .favorite-btn {
     border: none;
     background: transparent;

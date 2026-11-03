@@ -179,6 +179,31 @@ function testEmptyQueryKeepsSelectedSort() {
   assert.deepStrictEqual(byDefault, ["Alpha", "Bravo", "Charlie"]);
 }
 
+function testKeyboardFocusPrefersActiveSheetTab() {
+  const { search } = loadCore();
+  global.popupSelectedIndex = 0;
+
+  const first = fakeLi({ name: "MasterSettingByOwner", index: 0 });
+  const active = fakeLi({ name: "ActionLog", index: 1 });
+  active.classList.add("active-tab-item");
+  const third = fakeLi({ name: "Summary", index: 2 });
+
+  const items = [first, active, third];
+  const hits = search.filterAndSortTabs("", items, { quickFilter: "all" });
+  const ordered = hits.map((hit) => hit.li);
+
+  const activeIndex = ordered.findIndex((li) => li.classList.contains("active-tab-item"));
+  assert.strictEqual(activeIndex, 1);
+
+  ordered.forEach((li) => li.classList.remove("selected-tab"));
+  const focusIndex = activeIndex >= 0 ? activeIndex : 0;
+  ordered[focusIndex].classList.add("selected-tab");
+
+  assert.ok(active.classList.contains("selected-tab"));
+  assert.ok(!first.classList.contains("selected-tab"));
+  assert.ok(active.classList.contains("active-tab-item"));
+}
+
 function testShortcutIgnoresShiftAndAlt() {
   const { helpers } = loadCore();
   assert.strictEqual(
@@ -223,8 +248,26 @@ function testThemeAndFontValidation() {
 function testHiddenApplyDoesNotTouchMenuAndRereadsStorage() {
   const { helpers, storage } = loadCore();
   const menu = { style: { display: "" } };
+  const tabBar = { observeCalls: 0 };
   const payroll = fakeTab("Payroll");
   const sales = fakeTab("Sales");
+  payroll.parentElement = tabBar;
+  sales.parentElement = tabBar;
+
+  const observers = [];
+  global.MutationObserver = class {
+    constructor(cb) {
+      this.cb = cb;
+      this.disconnected = false;
+      observers.push(this);
+    }
+    observe() {
+      tabBar.observeCalls += 1;
+    }
+    disconnect() {
+      this.disconnected = true;
+    }
+  };
 
   global.document = {
     querySelectorAll(sel) {
@@ -232,6 +275,7 @@ function testHiddenApplyDoesNotTouchMenuAndRereadsStorage() {
       return [];
     },
     querySelector(sel) {
+      if (sel === CONFIG.SELECTORS.SHEET_TAB) return payroll;
       if (sel === CONFIG.SELECTORS.CONTEXT_MENU) return menu;
       return null;
     },
@@ -257,21 +301,113 @@ function testHiddenApplyDoesNotTouchMenuAndRereadsStorage() {
     assert.strictEqual(sales.style.display, "");
     assert.strictEqual(menu.style.display, "");
     assert.strictEqual(helpers.getHiddenTabsApplyState().timerActive, false);
+    assert.strictEqual(helpers.getHiddenTabsApplyState().watching, true);
+    assert.strictEqual(tabBar.observeCalls, 1);
+
+    // Sheets recreates the tab bar → observer re-applies hide from storage.
+    payroll.style.display = "";
+    observers[0].cb();
+    assert.strictEqual(payroll.style.display, "none");
 
     storage.showTab("Payroll");
-    helpers.applyHiddenTabsNow();
-    assert.strictEqual(payroll.style.display, "none");
-    // apply only hides names still in storage; user already showed in storage.
-    // The tab stays none until an explicit show, so simulate that:
-    payroll.style.display = "";
+    // applyHiddenTabsNow is hide-only; explicit show clears display.
+    helpers.showAllExtensionHiddenSheetTabs();
     helpers.applyHiddenTabsNow();
     assert.strictEqual(payroll.style.display, "");
+    assert.strictEqual(sales.style.display, "");
     assert.strictEqual(menu.style.display, "");
   } finally {
     helpers.stopApplyingHiddenTabs();
+    helpers.stopWatchingSheetTabsForHiddenState();
     global.setInterval = originalSetInterval;
     global.clearInterval = originalClearInterval;
+    delete global.MutationObserver;
   }
+}
+
+function testShowAllClearsDisplayAndStatsCountStorageOnly() {
+  const { helpers, storage } = loadCore();
+  const alpha = fakeTab("Alpha", { display: "none" });
+  const beta = fakeTab("Beta", { display: "none" });
+
+  global.document = {
+    querySelectorAll(sel) {
+      if (sel === CONFIG.SELECTORS.SHEET_TAB) return [alpha, beta];
+      return [];
+    },
+    querySelector() {
+      return null;
+    },
+  };
+
+  storage.setHiddenTabs(["Alpha", "Beta"]);
+  helpers.applyHiddenTabsNow();
+  assert.strictEqual(alpha.style.display, "none");
+  assert.strictEqual(beta.style.display, "none");
+  assert.strictEqual(helpers.getActualHiddenCount(), 2);
+
+  storage.setHiddenTabs([]);
+  // Hide-only apply must not wipe leftover display:none when storage is empty.
+  helpers.applyHiddenTabsNow();
+  assert.strictEqual(alpha.style.display, "none");
+  assert.strictEqual(helpers.getActualHiddenCount(), 2);
+  helpers.reconcileHiddenTabsWithDom();
+  assert.deepStrictEqual(storage.getHiddenTabs().sort(), ["Alpha", "Beta"]);
+
+  storage.setHiddenTabs([]);
+  helpers.showAllExtensionHiddenSheetTabs();
+  assert.strictEqual(alpha.style.display, "");
+  assert.strictEqual(beta.style.display, "");
+  assert.strictEqual(helpers.getActualHiddenCount(), 0);
+}
+
+function testHiddenStatsCountStorageOnlyTabs() {
+  const { helpers, storage, search } = loadCore();
+  const visible = fakeTab("Open");
+
+  global.document = {
+    querySelectorAll(sel) {
+      if (sel === CONFIG.SELECTORS.SHEET_TAB) return [visible];
+      return [];
+    },
+    querySelector() {
+      return null;
+    },
+  };
+
+  storage.setHiddenTabs(["Secret", "Archive"]);
+  const stats = helpers.getHiddenTabStats();
+  assert.strictEqual(stats.hiddenCount, 2);
+  assert.strictEqual(stats.totalTabs, 3);
+  assert.strictEqual(stats.visibleCount, 1);
+
+  const secretLi = fakeLi({ name: "Secret", hidden: true, index: 1 });
+  const openLi = fakeLi({ name: "Open", hidden: false, index: 0 });
+  search.filterAndSortTabs("", [openLi, secretLi], { quickFilter: "hidden" });
+  assert.strictEqual(secretLi.style.display, "block");
+  assert.strictEqual(openLi.style.display, "none");
+}
+
+function testBulkShowHiddenLeavesHiddenFilterEmptyWithoutReset() {
+  const { search } = loadCore();
+  const hidden = fakeLi({ name: "Secret", hidden: true, index: 0 });
+  const visible = fakeLi({ name: "Open", hidden: false, index: 1 });
+
+  // Before Show Hidden: Hidden filter shows only hidden rows.
+  search.filterAndSortTabs("", [hidden, visible], { quickFilter: "hidden" });
+  assert.strictEqual(hidden.style.display, "block");
+  assert.strictEqual(visible.style.display, "none");
+
+  // After Show Hidden clears isHidden, staying on Hidden filter yields an empty list.
+  hidden.dataset.isHidden = "false";
+  search.filterAndSortTabs("", [hidden, visible], { quickFilter: "hidden" });
+  assert.strictEqual(hidden.style.display, "none");
+  assert.strictEqual(visible.style.display, "none");
+
+  // Switching back to All (what Show Hidden now does) shows everything again.
+  search.filterAndSortTabs("", [hidden, visible], { quickFilter: "all" });
+  assert.strictEqual(hidden.style.display, "block");
+  assert.strictEqual(visible.style.display, "block");
 }
 
 function testHiddenApplyStopsAfterMaxAttempts() {
@@ -528,10 +664,14 @@ testPublishSpreadsheetIds();
 testNormalizeAndScoreMatch();
 testWhitespaceQueryKeepsAllFilterHits();
 testEmptyQueryKeepsSelectedSort();
+testKeyboardFocusPrefersActiveSheetTab();
 testShortcutIgnoresShiftAndAlt();
 testShortcutLabel();
 testThemeAndFontValidation();
 testHiddenApplyDoesNotTouchMenuAndRereadsStorage();
+testShowAllClearsDisplayAndStatsCountStorageOnly();
+testHiddenStatsCountStorageOnlyTabs();
+testBulkShowHiddenLeavesHiddenFilterEmptyWithoutReset();
 testHiddenApplyStopsAfterMaxAttempts();
 testAriaHiddenIsNotCounted();
 testDuplicateNamesCountSheetTabsOnly();
