@@ -94,11 +94,15 @@ function refreshTabListView(popup) {
     notFound.remove();
   }
 
-  popupSelectedIndex = 0;
+  // Keyboard focus (selected-tab) should follow the real Sheets active tab when
+  // it is in the visible list — not always row 0, which looked like a second "active".
+  const activeIndex = ordered.findIndex((li) => li.classList?.contains?.("active-tab-item"));
+  popupSelectedIndex = activeIndex >= 0 ? activeIndex : 0;
   if (ordered.length > 0) {
     ordered.forEach((li) => li.classList.remove("selected-tab"));
-    ordered[0].classList.add("selected-tab");
-    ordered[0].scrollIntoView?.({ block: "nearest" });
+    const focused = ordered[popupSelectedIndex];
+    focused.classList.add("selected-tab");
+    focused.scrollIntoView?.({ block: "nearest" });
   }
 
   return ordered;
