@@ -1,17 +1,25 @@
 // Extension entry point: floating button, shortcuts, init
 
+function applyFloatingButtonVisibility(button) {
+  if (!button || !button.style) return button;
+  button.style.display = isButtonVisible() ? "block" : "none";
+  return button;
+}
+
 function addPopupButton() {
   if (typeof document === "undefined" || !document.body) return null;
   const existing = document.getElementById("openSheetPopup");
   if (existing) {
     existing.textContent = `All Tabs (${getOpenPopupShortcutLabel()})`;
-    return existing;
+    // Re-apply after chrome.storage hydrate: an early boot may have created
+    // the button with the default visible state before preference was loaded.
+    return applyFloatingButtonVisibility(existing);
   }
 
   const button = document.createElement("button");
   button.id = "openSheetPopup";
   button.textContent = `All Tabs (${getOpenPopupShortcutLabel()})`;
-  button.style.display = isButtonVisible() ? "block" : "none";
+  applyFloatingButtonVisibility(button);
   button.addEventListener("click", toggleSheetTabsPopup);
   document.body.appendChild(button);
   return button;
@@ -64,6 +72,7 @@ window.addEventListener("load", () => {
 
 if (typeof module !== "undefined" && module.exports) {
   module.exports = {
+    applyFloatingButtonVisibility,
     addPopupButton,
     onOpenPopupShortcut,
     bootExtensionUi,

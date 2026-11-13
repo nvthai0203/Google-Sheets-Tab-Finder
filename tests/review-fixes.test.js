@@ -553,6 +553,57 @@ function testAllSheetsButtonMatching() {
   assert.strictEqual(helpers.isAllSheetsButton(barFirst), true);
 }
 
+function testAddPopupButtonReappliesVisibilityAfterHydrate() {
+  resetModules();
+  global.location = { pathname: "/spreadsheets/d/SHEET_A/edit" };
+  global.localStorage = createMemoryStorage();
+  global.CONFIG = require("../src/utils/constants.js");
+  Object.assign(global, require("../src/utils/helpers.js"));
+  const storage = require("../src/content/storage.js");
+  Object.assign(global, storage);
+  global.toggleSheetTabsPopup = () => {};
+  global.shouldOpenPopupShortcut = () => false;
+  global.getOpenPopupShortcutLabel = () => "Ctrl + S";
+  global.applyHiddenTabsFromStorage = () => {};
+  global.attachPopupTriggerToAllSheetsButton = () => {};
+
+  const existing = {
+    id: "openSheetPopup",
+    textContent: "All Tabs (Ctrl + S)",
+    style: { display: "block" },
+  };
+  const listeners = [];
+  global.document = {
+    body: {},
+    readyState: "complete",
+    getElementById(id) {
+      return id === "openSheetPopup" ? existing : null;
+    },
+    createElement() {
+      throw new Error("should reuse existing button");
+    },
+    addEventListener(type, fn) {
+      listeners.push({ type, fn });
+    },
+  };
+  global.window = {
+    addEventListener() {},
+  };
+
+  delete require.cache[path.resolve(__dirname, "../src/content/main.js")];
+  const main = require("../src/content/main.js");
+
+  // Simulate early boot (default visible) then preference loaded as hidden.
+  storage.setButtonVisible(false);
+  assert.strictEqual(main.addPopupButton(), existing);
+  assert.strictEqual(existing.style.display, "none");
+  assert.strictEqual(existing.textContent, "All Tabs (Ctrl + S)");
+
+  storage.setButtonVisible(true);
+  assert.strictEqual(main.addPopupButton(), existing);
+  assert.strictEqual(existing.style.display, "block");
+}
+
 function testFloatingButtonToggleBindsWithoutExistingButton() {
   const { storage } = loadCore();
   delete require.cache[path.resolve(__dirname, "../src/content/popup-events.js")];
@@ -677,6 +728,7 @@ testAriaHiddenIsNotCounted();
 testDuplicateNamesCountSheetTabsOnly();
 testActivateUnhidesBeforeClick();
 testAllSheetsButtonMatching();
+testAddPopupButtonReappliesVisibilityAfterHydrate();
 testFloatingButtonToggleBindsWithoutExistingButton();
 testPopupVersionUsesManifest();
 
