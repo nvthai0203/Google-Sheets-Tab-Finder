@@ -4,6 +4,9 @@ Chrome extension (Manifest V3, **v3.4.5**) that helps you find, organize, and ju
 
 See [CHANGELOG.md](CHANGELOG.md) for release history.
 
+### Chrome Web Store
+Install: [Search Tabs - Google Sheets](https://chromewebstore.google.com/detail/search-tabs-google-sheets/bbahnjbjcepikjmbjokgklfhebinnjma)
+
 ## Features
 
 ### Smart Search and Navigation
